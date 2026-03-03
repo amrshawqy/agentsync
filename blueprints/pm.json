@@ -1,0 +1,116 @@
+{
+	"slug": "pm",
+	"name": "Project Management",
+	"description": "Track projects, tasks, and sprints",
+	"category": "engineering",
+	"version": 1,
+	"tables": [
+		{
+			"slug": "projects",
+			"name": "Projects",
+			"agentHint": "A project groups related tasks and has a lifecycle from planning to completion.",
+			"fields": [
+				{ "slug": "name", "name": "Project Name", "fieldType": "text", "isRequired": true, "isIndexed": true },
+				{ "slug": "description", "name": "Description", "fieldType": "text" },
+				{ "slug": "status", "name": "Status", "fieldType": "select", "isRequired": true, "isIndexed": true, "options": [
+					{ "value": "planning", "label": "Planning" },
+					{ "value": "active", "label": "Active" },
+					{ "value": "on_hold", "label": "On Hold" },
+					{ "value": "completed", "label": "Completed" },
+					{ "value": "cancelled", "label": "Cancelled" }
+				], "constraints": { "transitions": { "planning": ["active", "cancelled"], "active": ["on_hold", "completed", "cancelled"], "on_hold": ["active", "cancelled"], "completed": [], "cancelled": [] } } },
+				{ "slug": "owner", "name": "Owner", "fieldType": "text", "isIndexed": true },
+				{ "slug": "start_date", "name": "Start Date", "fieldType": "date" },
+				{ "slug": "end_date", "name": "End Date", "fieldType": "date" },
+				{ "slug": "priority", "name": "Priority", "fieldType": "select", "options": [
+					{ "value": "low", "label": "Low" }, { "value": "medium", "label": "Medium" }, { "value": "high", "label": "High" }, { "value": "critical", "label": "Critical" }
+				] }
+			]
+		},
+		{
+			"slug": "tasks",
+			"name": "Tasks",
+			"agentHint": "A task is a unit of work within a project. Link to the parent project.",
+			"fields": [
+				{ "slug": "title", "name": "Title", "fieldType": "text", "isRequired": true, "isIndexed": true },
+				{ "slug": "description", "name": "Description", "fieldType": "text" },
+				{ "slug": "status", "name": "Status", "fieldType": "select", "isRequired": true, "isIndexed": true, "options": [
+					{ "value": "todo", "label": "To Do" }, { "value": "in_progress", "label": "In Progress" }, { "value": "review", "label": "In Review" }, { "value": "done", "label": "Done" }
+				], "constraints": { "transitions": { "todo": ["in_progress"], "in_progress": ["review", "todo"], "review": ["done", "in_progress"], "done": [] } } },
+				{ "slug": "project_id", "name": "Project", "fieldType": "relation", "isIndexed": true, "relationConfig": { "targetTable": "projects", "displayField": "name", "reverseName": "tasks" }, "agentHint": "The project this task belongs to" },
+				{ "slug": "assignee", "name": "Assignee", "fieldType": "text", "isIndexed": true },
+				{ "slug": "priority", "name": "Priority", "fieldType": "select", "options": [
+					{ "value": "low", "label": "Low" }, { "value": "medium", "label": "Medium" }, { "value": "high", "label": "High" }
+				] },
+				{ "slug": "due_date", "name": "Due Date", "fieldType": "date" },
+				{ "slug": "estimate_hours", "name": "Estimate (hours)", "fieldType": "number" }
+			]
+		},
+		{
+			"slug": "milestones",
+			"name": "Milestones",
+			"description": "Key checkpoints within a project timeline",
+			"agentHint": "A milestone marks a significant checkpoint in a project. Track whether it was reached on time or missed.",
+			"fields": [
+				{ "slug": "name", "name": "Milestone Name", "fieldType": "text", "isRequired": true },
+				{ "slug": "due_date", "name": "Due Date", "fieldType": "date" },
+				{ "slug": "status", "name": "Status", "fieldType": "select", "isRequired": true, "isIndexed": true, "options": [
+					{ "value": "pending", "label": "Pending" },
+					{ "value": "reached", "label": "Reached" },
+					{ "value": "missed", "label": "Missed" }
+				], "constraints": { "transitions": { "pending": ["reached", "missed"], "reached": [], "missed": [] } } },
+				{ "slug": "project_id", "name": "Project", "fieldType": "relation", "isIndexed": true, "relationConfig": { "targetTable": "projects", "displayField": "name", "reverseName": "milestones" }, "agentHint": "The project this milestone belongs to" }
+			]
+		},
+		{
+			"slug": "sprints",
+			"name": "Sprints",
+			"description": "Time-boxed iterations for delivering work",
+			"agentHint": "A sprint is a time-boxed iteration. Only one sprint per project should be active at a time.",
+			"fields": [
+				{ "slug": "name", "name": "Sprint Name", "fieldType": "text", "isRequired": true },
+				{ "slug": "start_date", "name": "Start Date", "fieldType": "date" },
+				{ "slug": "end_date", "name": "End Date", "fieldType": "date" },
+				{ "slug": "status", "name": "Status", "fieldType": "select", "isRequired": true, "isIndexed": true, "options": [
+					{ "value": "planning", "label": "Planning" },
+					{ "value": "active", "label": "Active" },
+					{ "value": "completed", "label": "Completed" }
+				], "constraints": { "transitions": { "planning": ["active"], "active": ["completed"], "completed": [] } } },
+				{ "slug": "project_id", "name": "Project", "fieldType": "relation", "isIndexed": true, "relationConfig": { "targetTable": "projects", "displayField": "name", "reverseName": "sprints" }, "agentHint": "The project this sprint belongs to" }
+			]
+		},
+		{
+			"slug": "comments",
+			"name": "Comments",
+			"description": "Discussion threads on tasks",
+			"agentHint": "A comment is a discussion entry on a task. Used for collaboration and status updates.",
+			"fields": [
+				{ "slug": "body", "name": "Body", "fieldType": "text", "isRequired": true },
+				{ "slug": "author", "name": "Author", "fieldType": "text" },
+				{ "slug": "task_id", "name": "Task", "fieldType": "relation", "isRequired": true, "isIndexed": true, "relationConfig": { "targetTable": "tasks", "displayField": "title", "reverseName": "comments" }, "agentHint": "The task this comment is posted on" }
+			]
+		}
+	],
+	"seedData": {
+		"projects": [
+			{ "name": "AgentSync MVP", "description": "Build the core platform for AI-powered workspace management", "status": "active", "owner": "Amr", "start_date": "2026-02-01", "priority": "critical" }
+		],
+		"tasks": [
+			{ "title": "Design blueprint schema", "description": "Define the JSON schema for workspace blueprints", "status": "done", "project_id": "@ref:projects:0", "assignee": "Amr", "priority": "high", "due_date": "2026-02-10", "estimate_hours": 8 },
+			{ "title": "Implement blueprint loader", "description": "Build the engine that reads and validates blueprint JSON files", "status": "in_progress", "project_id": "@ref:projects:0", "assignee": "Amr", "priority": "high", "due_date": "2026-02-20", "estimate_hours": 16 }
+		],
+		"sprints": [
+			{ "name": "Sprint 1 — Foundation", "start_date": "2026-02-01", "end_date": "2026-02-14", "status": "completed", "project_id": "@ref:projects:0" }
+		],
+		"milestones": [
+			{ "name": "Schema v1 Finalized", "due_date": "2026-02-14", "status": "reached", "project_id": "@ref:projects:0" }
+		],
+		"comments": [
+			{ "body": "Schema looks good, moving to implementation.", "author": "Amr", "task_id": "@ref:tasks:0" }
+		]
+	},
+	"instructions": {
+		"rules": "Tasks must follow status transitions. Only the assignee or a manager can move tasks to Done.",
+		"guidance": "Focus on high-priority tasks first. Provide daily summaries of task progress when asked."
+	}
+}

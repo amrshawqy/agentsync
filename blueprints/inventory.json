@@ -1,0 +1,117 @@
+{
+	"slug": "inventory",
+	"name": "Inventory",
+	"description": "Product inventory, suppliers, warehouses, orders, and stock level management",
+	"category": "operations",
+	"version": 1,
+	"tables": [
+		{
+			"slug": "suppliers",
+			"name": "Suppliers",
+			"description": "Vendors and suppliers who provide products",
+			"agentHint": "A supplier provides products. Link products to their supplier for procurement tracking.",
+			"fields": [
+				{ "slug": "name", "name": "Supplier Name", "fieldType": "text", "isRequired": true, "isIndexed": true },
+				{ "slug": "contact_email", "name": "Contact Email", "fieldType": "email", "isIndexed": true },
+				{ "slug": "contact_phone", "name": "Contact Phone", "fieldType": "phone" },
+				{ "slug": "address", "name": "Address", "fieldType": "text" },
+				{ "slug": "status", "name": "Status", "fieldType": "select", "isRequired": true, "options": [
+					{ "value": "active", "label": "Active" }, { "value": "inactive", "label": "Inactive" }, { "value": "on_hold", "label": "On Hold" }
+				] },
+				{ "slug": "lead_time_days", "name": "Lead Time (days)", "fieldType": "number", "validation": { "min": 0 }, "agentHint": "Average days from order to delivery" },
+				{ "slug": "notes", "name": "Notes", "fieldType": "text" }
+			]
+		},
+		{
+			"slug": "warehouses",
+			"name": "Warehouses",
+			"description": "Physical storage locations for inventory",
+			"agentHint": "A warehouse is a storage location. Stock levels are tracked per warehouse.",
+			"fields": [
+				{ "slug": "name", "name": "Warehouse Name", "fieldType": "text", "isRequired": true, "isIndexed": true },
+				{ "slug": "code", "name": "Code", "fieldType": "text", "isRequired": true, "isIndexed": true, "validation": { "unique": true }, "agentHint": "Short identifier like WH-01" },
+				{ "slug": "location", "name": "Location", "fieldType": "text", "isRequired": true },
+				{ "slug": "capacity", "name": "Capacity (units)", "fieldType": "number", "validation": { "min": 0 }, "agentHint": "Maximum storage capacity in units" },
+				{ "slug": "status", "name": "Status", "fieldType": "select", "isRequired": true, "options": [
+					{ "value": "active", "label": "Active" }, { "value": "full", "label": "Full" }, { "value": "closed", "label": "Closed" }
+				] }
+			]
+		},
+		{
+			"slug": "products",
+			"name": "Products",
+			"description": "Product catalog with pricing and stock tracking",
+			"agentHint": "A product in inventory. Track stock levels carefully. Link to supplier.",
+			"fields": [
+				{ "slug": "name", "name": "Product Name", "fieldType": "text", "isRequired": true, "isIndexed": true },
+				{ "slug": "sku", "name": "SKU", "fieldType": "text", "isRequired": true, "isIndexed": true, "validation": { "unique": true } },
+				{ "slug": "category", "name": "Category", "fieldType": "text", "isIndexed": true },
+				{ "slug": "supplier_id", "name": "Supplier", "fieldType": "relation", "isIndexed": true, "relationConfig": { "targetTable": "suppliers", "displayField": "name", "reverseName": "products" }, "agentHint": "The supplier who provides this product" },
+				{ "slug": "price", "name": "Unit Price", "fieldType": "currency" },
+				{ "slug": "cost", "name": "Unit Cost", "fieldType": "currency", "agentHint": "Cost from supplier — keep confidential per field access rules" },
+				{ "slug": "quantity", "name": "Quantity in Stock", "fieldType": "number", "validation": { "min": 0 } },
+				{ "slug": "reorder_level", "name": "Reorder Level", "fieldType": "number", "agentHint": "Alert when stock drops below this" },
+				{ "slug": "status", "name": "Status", "fieldType": "select", "isRequired": true, "options": [
+					{ "value": "active", "label": "Active" }, { "value": "discontinued", "label": "Discontinued" }, { "value": "out_of_stock", "label": "Out of Stock" }
+				] }
+			]
+		},
+		{
+			"slug": "orders",
+			"name": "Purchase Orders",
+			"description": "Orders placed with suppliers for restocking",
+			"agentHint": "A purchase order to a supplier. Track order status through the fulfillment pipeline.",
+			"fields": [
+				{ "slug": "order_number", "name": "Order Number", "fieldType": "text", "isRequired": true, "isIndexed": true, "validation": { "unique": true } },
+				{ "slug": "supplier_id", "name": "Supplier", "fieldType": "relation", "isRequired": true, "isIndexed": true, "relationConfig": { "targetTable": "suppliers", "displayField": "name", "reverseName": "orders" }, "agentHint": "The supplier this order is placed with" },
+				{ "slug": "warehouse_id", "name": "Destination Warehouse", "fieldType": "relation", "isRequired": true, "isIndexed": true, "relationConfig": { "targetTable": "warehouses", "displayField": "name", "reverseName": "incoming_orders" }, "agentHint": "Where the ordered goods will be stored" },
+				{ "slug": "status", "name": "Status", "fieldType": "select", "isRequired": true, "isIndexed": true, "options": [
+					{ "value": "draft", "label": "Draft" }, { "value": "submitted", "label": "Submitted" }, { "value": "confirmed", "label": "Confirmed" }, { "value": "shipped", "label": "Shipped" }, { "value": "received", "label": "Received" }, { "value": "cancelled", "label": "Cancelled" }
+				], "constraints": { "transitions": { "draft": ["submitted", "cancelled"], "submitted": ["confirmed", "cancelled"], "confirmed": ["shipped", "cancelled"], "shipped": ["received"], "received": [], "cancelled": [] } } },
+				{ "slug": "total_amount", "name": "Total Amount", "fieldType": "currency" },
+				{ "slug": "order_date", "name": "Order Date", "fieldType": "date", "isRequired": true },
+				{ "slug": "expected_date", "name": "Expected Delivery", "fieldType": "date" },
+				{ "slug": "notes", "name": "Notes", "fieldType": "text" }
+			]
+		},
+		{
+			"slug": "stock_levels",
+			"name": "Stock Levels",
+			"description": "Per-warehouse stock tracking for each product",
+			"agentHint": "Tracks quantity of a specific product in a specific warehouse. One record per product-warehouse pair.",
+			"fields": [
+				{ "slug": "product_id", "name": "Product", "fieldType": "relation", "isRequired": true, "isIndexed": true, "relationConfig": { "targetTable": "products", "displayField": "name", "reverseName": "stock_levels" }, "agentHint": "The product being tracked" },
+				{ "slug": "warehouse_id", "name": "Warehouse", "fieldType": "relation", "isRequired": true, "isIndexed": true, "relationConfig": { "targetTable": "warehouses", "displayField": "name", "reverseName": "stock_levels" }, "agentHint": "The warehouse holding this stock" },
+				{ "slug": "quantity", "name": "Quantity", "fieldType": "number", "isRequired": true, "validation": { "min": 0 } },
+				{ "slug": "reserved", "name": "Reserved", "fieldType": "number", "validation": { "min": 0 }, "agentHint": "Quantity reserved for pending orders" },
+				{ "slug": "last_counted", "name": "Last Counted", "fieldType": "date", "agentHint": "Date of last physical inventory count" }
+			]
+		}
+	],
+	"seedData": {
+		"suppliers": [
+			{ "name": "TechParts Inc.", "contact_email": "orders@techparts.example.com", "status": "active", "lead_time_days": 5 },
+			{ "name": "Global Supply Co.", "contact_email": "sales@globalsupply.example.com", "status": "active", "lead_time_days": 14 }
+		],
+		"warehouses": [
+			{ "name": "Main Warehouse", "code": "WH-01", "location": "Austin, TX", "capacity": 10000, "status": "active" },
+			{ "name": "East Coast Hub", "code": "WH-02", "location": "Newark, NJ", "capacity": 5000, "status": "active" }
+		],
+		"products": [
+			{ "name": "Widget Pro", "sku": "WGT-PRO-001", "category": "Components", "supplier_id": "@ref:suppliers:0", "price": 29.99, "cost": 12.50, "quantity": 450, "reorder_level": 100, "status": "active" },
+			{ "name": "Gadget Lite", "sku": "GDG-LTE-001", "category": "Accessories", "supplier_id": "@ref:suppliers:1", "price": 14.99, "cost": 5.00, "quantity": 30, "reorder_level": 50, "status": "active" }
+		],
+		"orders": [
+			{ "order_number": "PO-2026-001", "supplier_id": "@ref:suppliers:1", "warehouse_id": "@ref:warehouses:0", "status": "confirmed", "total_amount": 500.00, "order_date": "2026-02-20", "expected_date": "2026-03-06", "notes": "Urgent restock for Gadget Lite" }
+		],
+		"stock_levels": [
+			{ "product_id": "@ref:products:0", "warehouse_id": "@ref:warehouses:0", "quantity": 300, "reserved": 20, "last_counted": "2026-02-15" },
+			{ "product_id": "@ref:products:0", "warehouse_id": "@ref:warehouses:1", "quantity": 150, "reserved": 0, "last_counted": "2026-02-15" },
+			{ "product_id": "@ref:products:1", "warehouse_id": "@ref:warehouses:0", "quantity": 30, "reserved": 5, "last_counted": "2026-02-15" }
+		]
+	},
+	"instructions": {
+		"rules": "Flag any product where quantity drops below reorder_level. Purchase orders over $10,000 require manager approval. Never order from suppliers with status 'on_hold'.",
+		"guidance": "Check stock_levels across all warehouses before creating a purchase order — the product may be available elsewhere. Prefer suppliers with shorter lead times for urgent restocks."
+	}
+}
