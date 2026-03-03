@@ -1,0 +1,1 @@
+ALTER TABLE "schema_fields" ADD COLUMN "rollup_config" jsonb;

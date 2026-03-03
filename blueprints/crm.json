@@ -1,0 +1,137 @@
+{
+	"slug": "crm",
+	"name": "CRM",
+	"description": "Customer Relationship Management — contacts, companies, and deals pipeline",
+	"category": "sales",
+	"version": 1,
+	"tables": [
+		{
+			"slug": "contacts",
+			"name": "Contacts",
+			"description": "People your team interacts with",
+			"agentHint": "A contact represents a person. Always capture at least name and one communication channel (email or phone).",
+			"fields": [
+				{ "slug": "name", "name": "Name", "fieldType": "text", "isRequired": true, "agentHint": "Full name as the person introduces themselves" },
+				{ "slug": "email", "name": "Email", "fieldType": "email", "isIndexed": true, "validation": { "pattern": "email" }, "agentHint": "Primary email address" },
+				{ "slug": "phone", "name": "Phone", "fieldType": "phone", "agentHint": "Phone number with country code" },
+				{ "slug": "company", "name": "Company", "fieldType": "text", "isIndexed": true, "agentHint": "Company the contact works at — consider linking to a companies record" },
+				{ "slug": "title", "name": "Job Title", "fieldType": "text" },
+				{ "slug": "status", "name": "Status", "fieldType": "select", "isRequired": true, "isIndexed": true, "options": [
+					{ "value": "lead", "label": "Lead" },
+					{ "value": "qualified", "label": "Qualified" },
+					{ "value": "customer", "label": "Customer" },
+					{ "value": "churned", "label": "Churned" },
+					{ "value": "archive", "label": "Archive" }
+				], "constraints": { "transitions": { "lead": ["qualified", "archive"], "qualified": ["customer", "archive"], "customer": ["churned"], "churned": ["customer", "archive"], "archive": [] } }, "agentHint": "Lifecycle status. Transitions are enforced by the platform." },
+				{ "slug": "source", "name": "Source", "fieldType": "select", "options": [
+					{ "value": "inbound", "label": "Inbound" },
+					{ "value": "outbound", "label": "Outbound" },
+					{ "value": "referral", "label": "Referral" },
+					{ "value": "event", "label": "Event" }
+				] },
+				{ "slug": "notes", "name": "Notes", "fieldType": "text", "agentHint": "Free-form notes about this contact" }
+			]
+		},
+		{
+			"slug": "companies",
+			"name": "Companies",
+			"description": "Organizations your team sells to or partners with",
+			"agentHint": "A company groups related contacts. Link contacts to their company using the 'works_at' relation.",
+			"fields": [
+				{ "slug": "name", "name": "Company Name", "fieldType": "text", "isRequired": true, "isIndexed": true },
+				{ "slug": "domain", "name": "Domain", "fieldType": "url", "isIndexed": true, "agentHint": "Company website domain" },
+				{ "slug": "industry", "name": "Industry", "fieldType": "text" },
+				{ "slug": "size", "name": "Company Size", "fieldType": "select", "options": [
+					{ "value": "1-10", "label": "1-10" },
+					{ "value": "11-50", "label": "11-50" },
+					{ "value": "51-200", "label": "51-200" },
+					{ "value": "201-1000", "label": "201-1000" },
+					{ "value": "1000+", "label": "1000+" }
+				] },
+				{ "slug": "revenue", "name": "Annual Revenue", "fieldType": "currency" },
+				{ "slug": "notes", "name": "Notes", "fieldType": "text" }
+			]
+		},
+		{
+			"slug": "deals",
+			"name": "Deals",
+			"description": "Sales opportunities being tracked through the pipeline",
+			"agentHint": "A deal tracks a sales opportunity. Always link to a contact and optionally a company. Stage transitions are enforced.",
+			"fields": [
+				{ "slug": "title", "name": "Deal Title", "fieldType": "text", "isRequired": true, "isIndexed": true },
+				{ "slug": "amount", "name": "Amount", "fieldType": "currency", "agentHint": "Expected deal value in USD" },
+				{ "slug": "stage", "name": "Stage", "fieldType": "select", "isRequired": true, "isIndexed": true, "options": [
+					{ "value": "prospecting", "label": "Prospecting" },
+					{ "value": "qualification", "label": "Qualification" },
+					{ "value": "proposal", "label": "Proposal" },
+					{ "value": "negotiation", "label": "Negotiation" },
+					{ "value": "won", "label": "Won", "terminal": true },
+					{ "value": "lost", "label": "Lost", "terminal": true }
+				], "constraints": { "transitions": { "prospecting": ["qualification", "lost"], "qualification": ["proposal", "lost"], "proposal": ["negotiation", "lost"], "negotiation": ["won", "lost"], "won": [], "lost": [] } }, "agentHint": "Pipeline stage. Follows a strict progression — cannot skip stages." },
+				{ "slug": "contact_id", "name": "Contact", "fieldType": "relation", "isIndexed": true, "relationConfig": { "targetTable": "contacts", "displayField": "name", "reverseName": "deals" }, "agentHint": "The primary contact associated with this deal" },
+				{ "slug": "company_id", "name": "Company", "fieldType": "relation", "isIndexed": true, "relationConfig": { "targetTable": "companies", "displayField": "name", "reverseName": "deals" }, "agentHint": "The company this deal is associated with" },
+				{ "slug": "close_date", "name": "Expected Close Date", "fieldType": "date" },
+				{ "slug": "owner", "name": "Deal Owner", "fieldType": "text", "isIndexed": true, "agentHint": "Team member responsible for this deal" },
+				{ "slug": "priority", "name": "Priority", "fieldType": "select", "options": [
+					{ "value": "low", "label": "Low" },
+					{ "value": "medium", "label": "Medium" },
+					{ "value": "high", "label": "High" }
+				] },
+				{ "slug": "notes", "name": "Notes", "fieldType": "text" }
+			]
+		},
+		{
+			"slug": "activities",
+			"name": "Activities",
+			"description": "Interactions and tasks related to contacts and deals",
+			"agentHint": "An activity logs a customer interaction (call, email, meeting) or a follow-up task. Always link to a contact.",
+			"fields": [
+				{ "slug": "type", "name": "Type", "fieldType": "select", "isRequired": true, "isIndexed": true, "options": [
+					{ "value": "call", "label": "Call" },
+					{ "value": "email", "label": "Email" },
+					{ "value": "meeting", "label": "Meeting" },
+					{ "value": "task", "label": "Task" }
+				] },
+				{ "slug": "subject", "name": "Subject", "fieldType": "text", "isRequired": true },
+				{ "slug": "notes", "name": "Notes", "fieldType": "text" },
+				{ "slug": "date", "name": "Date", "fieldType": "date", "isRequired": true },
+				{ "slug": "contact_id", "name": "Contact", "fieldType": "relation", "isRequired": true, "isIndexed": true, "relationConfig": { "targetTable": "contacts", "displayField": "name", "reverseName": "activities" }, "agentHint": "The contact this activity is linked to" }
+			]
+		},
+		{
+			"slug": "notes",
+			"name": "Notes",
+			"description": "General notes and internal memos",
+			"agentHint": "A standalone note for internal use. Can be pinned for visibility.",
+			"fields": [
+				{ "slug": "title", "name": "Title", "fieldType": "text", "isRequired": true },
+				{ "slug": "body", "name": "Body", "fieldType": "text", "isRequired": true },
+				{ "slug": "pinned", "name": "Pinned", "fieldType": "boolean", "default": false }
+			]
+		}
+	],
+	"seedData": {
+		"contacts": [
+			{ "name": "Sarah Johnson", "email": "sarah@example.com", "company": "TechCorp", "status": "customer", "source": "inbound" },
+			{ "name": "Ahmed Hassan", "email": "ahmed@example.com", "company": "DataFlow", "status": "lead", "source": "referral" }
+		],
+		"companies": [
+			{ "name": "TechCorp", "domain": "https://techcorp.example.com", "industry": "Technology", "size": "51-200" },
+			{ "name": "DataFlow", "domain": "https://dataflow.example.com", "industry": "Data Analytics", "size": "11-50" }
+		],
+		"deals": [
+			{ "title": "TechCorp Enterprise License", "amount": 50000, "stage": "proposal", "contact_id": "@ref:contacts:0", "company_id": "@ref:companies:0", "owner": "Sarah", "priority": "high" }
+		],
+		"activities": [
+			{ "type": "meeting", "subject": "Initial discovery call with TechCorp", "date": "2026-02-20", "contact_id": "@ref:contacts:0", "notes": "Discussed enterprise needs and timeline" },
+			{ "type": "email", "subject": "Follow-up proposal to DataFlow", "date": "2026-02-25", "contact_id": "@ref:contacts:1" }
+		],
+		"notes": [
+			{ "title": "Q1 Sales Strategy", "body": "Focus on enterprise accounts in the technology sector. Target close rate: 30%.", "pinned": true }
+		]
+	},
+	"instructions": {
+		"rules": "All deals over $100k require manager approval before moving to Won. Contacts must have at least email or phone.",
+		"guidance": "Prioritize deals closing this month. When enriching contacts, mark confidence levels appropriately."
+	}
+}

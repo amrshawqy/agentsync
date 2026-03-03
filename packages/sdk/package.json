@@ -1,0 +1,30 @@
+{
+  "name": "@agentsync/sdk",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "dist/index.cjs",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "scripts": {
+    "build": "tsup",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "dev": "tsup --watch"
+  },
+  "dependencies": {
+    "@agentsync/types": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^25.3.2",
+    "vitest": "^2.1.8",
+    "tsup": "^8.3.0",
+    "typescript": "^5.7.2"
+  }
+}

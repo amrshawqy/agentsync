@@ -1,0 +1,124 @@
+{
+	"slug": "support",
+	"name": "Support",
+	"description": "Customer support — tickets, customers, knowledge base, SLAs, and canned responses",
+	"category": "support",
+	"version": 1,
+	"tables": [
+		{
+			"slug": "customers",
+			"name": "Customers",
+			"description": "Customer accounts and contact information",
+			"agentHint": "A customer who submits support tickets. Link tickets to their customer record for full context.",
+			"fields": [
+				{ "slug": "name", "name": "Name", "fieldType": "text", "isRequired": true, "isIndexed": true, "agentHint": "Customer name (person or company)" },
+				{ "slug": "email", "name": "Email", "fieldType": "email", "isRequired": true, "isIndexed": true },
+				{ "slug": "phone", "name": "Phone", "fieldType": "phone" },
+				{ "slug": "company", "name": "Company", "fieldType": "text", "isIndexed": true },
+				{ "slug": "plan", "name": "Plan", "fieldType": "select", "isIndexed": true, "options": [
+					{ "value": "free", "label": "Free" }, { "value": "starter", "label": "Starter" }, { "value": "pro", "label": "Pro" }, { "value": "enterprise", "label": "Enterprise" }
+				], "agentHint": "Customer's subscription plan — affects SLA priority" },
+				{ "slug": "status", "name": "Status", "fieldType": "select", "isRequired": true, "options": [
+					{ "value": "active", "label": "Active" }, { "value": "churned", "label": "Churned" }
+				] },
+				{ "slug": "notes", "name": "Notes", "fieldType": "text" }
+			]
+		},
+		{
+			"slug": "tickets",
+			"name": "Tickets",
+			"description": "Support tickets from customers",
+			"agentHint": "A support ticket from a customer. Track through resolution pipeline. Always link to a customer record.",
+			"fields": [
+				{ "slug": "subject", "name": "Subject", "fieldType": "text", "isRequired": true, "isIndexed": true },
+				{ "slug": "description", "name": "Description", "fieldType": "text", "isRequired": true },
+				{ "slug": "customer_id", "name": "Customer", "fieldType": "relation", "isIndexed": true, "relationConfig": { "targetTable": "customers", "displayField": "name", "reverseName": "tickets" }, "agentHint": "The customer who submitted this ticket" },
+				{ "slug": "status", "name": "Status", "fieldType": "select", "isRequired": true, "isIndexed": true, "options": [
+					{ "value": "open", "label": "Open" }, { "value": "in_progress", "label": "In Progress" }, { "value": "waiting", "label": "Waiting on Customer" }, { "value": "resolved", "label": "Resolved" }, { "value": "closed", "label": "Closed" }
+				], "constraints": { "transitions": { "open": ["in_progress", "closed"], "in_progress": ["waiting", "resolved", "closed"], "waiting": ["in_progress", "closed"], "resolved": ["closed", "open"], "closed": [] } } },
+				{ "slug": "priority", "name": "Priority", "fieldType": "select", "isRequired": true, "options": [
+					{ "value": "low", "label": "Low" }, { "value": "medium", "label": "Medium" }, { "value": "high", "label": "High" }, { "value": "urgent", "label": "Urgent" }
+				] },
+				{ "slug": "assignee", "name": "Assignee", "fieldType": "text", "isIndexed": true },
+				{ "slug": "category", "name": "Category", "fieldType": "select", "options": [
+					{ "value": "bug", "label": "Bug" }, { "value": "feature", "label": "Feature Request" }, { "value": "question", "label": "Question" }, { "value": "billing", "label": "Billing" }
+				] },
+				{ "slug": "sla_id", "name": "SLA Policy", "fieldType": "relation", "relationConfig": { "targetTable": "slas", "displayField": "name", "reverseName": "tickets" }, "agentHint": "The SLA policy governing response/resolution times" }
+			]
+		},
+		{
+			"slug": "knowledge_base",
+			"name": "Knowledge Base",
+			"description": "Help articles and documentation for customers and agents",
+			"agentHint": "A knowledge base article. Search here before answering customer questions. Link related tickets.",
+			"fields": [
+				{ "slug": "title", "name": "Title", "fieldType": "text", "isRequired": true, "isIndexed": true },
+				{ "slug": "body", "name": "Body", "fieldType": "text", "isRequired": true, "agentHint": "Full article content in markdown" },
+				{ "slug": "category", "name": "Category", "fieldType": "select", "isIndexed": true, "options": [
+					{ "value": "getting_started", "label": "Getting Started" }, { "value": "troubleshooting", "label": "Troubleshooting" }, { "value": "billing", "label": "Billing" }, { "value": "api", "label": "API" }, { "value": "faq", "label": "FAQ" }
+				] },
+				{ "slug": "status", "name": "Status", "fieldType": "select", "isRequired": true, "isIndexed": true, "options": [
+					{ "value": "draft", "label": "Draft" }, { "value": "published", "label": "Published" }, { "value": "archived", "label": "Archived" }
+				], "constraints": { "transitions": { "draft": ["published"], "published": ["archived", "draft"], "archived": [] } } },
+				{ "slug": "tags", "name": "Tags", "fieldType": "text", "agentHint": "Comma-separated tags for search" }
+			]
+		},
+		{
+			"slug": "slas",
+			"name": "SLA Policies",
+			"description": "Service Level Agreement definitions",
+			"agentHint": "An SLA policy defines response and resolution time targets. Link to tickets to track compliance.",
+			"fields": [
+				{ "slug": "name", "name": "Policy Name", "fieldType": "text", "isRequired": true, "isIndexed": true, "validation": { "unique": true } },
+				{ "slug": "response_hours", "name": "Response Time (hours)", "fieldType": "number", "isRequired": true, "validation": { "min": 1 }, "agentHint": "Maximum hours to first response" },
+				{ "slug": "resolution_hours", "name": "Resolution Time (hours)", "fieldType": "number", "isRequired": true, "validation": { "min": 1 }, "agentHint": "Maximum hours to resolution" },
+				{ "slug": "priority", "name": "Applies To Priority", "fieldType": "select", "isRequired": true, "options": [
+					{ "value": "low", "label": "Low" }, { "value": "medium", "label": "Medium" }, { "value": "high", "label": "High" }, { "value": "urgent", "label": "Urgent" }, { "value": "all", "label": "All" }
+				] },
+				{ "slug": "is_active", "name": "Active", "fieldType": "boolean", "isRequired": true }
+			]
+		},
+		{
+			"slug": "canned_responses",
+			"name": "Canned Responses",
+			"description": "Pre-written reply templates for common support scenarios",
+			"agentHint": "A template response for common scenarios. Use these to maintain consistent, fast replies. Search by category or title.",
+			"fields": [
+				{ "slug": "title", "name": "Title", "fieldType": "text", "isRequired": true, "isIndexed": true, "agentHint": "Short descriptive name for the template" },
+				{ "slug": "body", "name": "Response Body", "fieldType": "text", "isRequired": true, "agentHint": "The template text. May contain placeholders like {{customer_name}}" },
+				{ "slug": "category", "name": "Category", "fieldType": "select", "isIndexed": true, "options": [
+					{ "value": "greeting", "label": "Greeting" }, { "value": "troubleshooting", "label": "Troubleshooting" }, { "value": "billing", "label": "Billing" }, { "value": "escalation", "label": "Escalation" }, { "value": "closing", "label": "Closing" }
+				] },
+				{ "slug": "is_active", "name": "Active", "fieldType": "boolean", "isRequired": true }
+			]
+		}
+	],
+	"seedData": {
+		"customers": [
+			{ "name": "Acme Corp", "email": "support@acme.example.com", "company": "Acme Corp", "plan": "pro", "status": "active" },
+			{ "name": "Jane Smith", "email": "jane@example.com", "plan": "starter", "status": "active" }
+		],
+		"slas": [
+			{ "name": "Enterprise SLA", "response_hours": 1, "resolution_hours": 8, "priority": "all", "is_active": true },
+			{ "name": "Standard SLA", "response_hours": 4, "resolution_hours": 24, "priority": "medium", "is_active": true },
+			{ "name": "Urgent SLA", "response_hours": 1, "resolution_hours": 4, "priority": "urgent", "is_active": true }
+		],
+		"tickets": [
+			{ "subject": "Cannot login to dashboard", "description": "Getting a 403 error when trying to access the main dashboard after password reset.", "customer_id": "@ref:customers:0", "status": "in_progress", "priority": "high", "assignee": "Support Team", "category": "bug", "sla_id": "@ref:slas:0" },
+			{ "subject": "How do I export data?", "description": "Looking for a way to export my project data to CSV.", "customer_id": "@ref:customers:1", "status": "open", "priority": "low", "category": "question", "sla_id": "@ref:slas:1" }
+		],
+		"knowledge_base": [
+			{ "title": "How to reset your password", "body": "Go to Settings > Security > Reset Password. You will receive a confirmation email.", "category": "getting_started", "status": "published", "tags": "password,login,security" },
+			{ "title": "Exporting data to CSV", "body": "Navigate to your project, click the Export button in the top toolbar, and select CSV format.", "category": "faq", "status": "published", "tags": "export,csv,data" }
+		],
+		"canned_responses": [
+			{ "title": "Greeting - First Response", "body": "Hi {{customer_name}}, thank you for reaching out! I'm looking into your issue and will get back to you shortly.", "category": "greeting", "is_active": true },
+			{ "title": "Issue Resolved", "body": "Great news — this issue has been resolved. Please let us know if you experience any further problems.", "category": "closing", "is_active": true },
+			{ "title": "Escalation Notice", "body": "I'm escalating this to our engineering team for a deeper investigation. You'll hear back within 24 hours.", "category": "escalation", "is_active": true }
+		]
+	},
+	"instructions": {
+		"rules": "Urgent tickets must be acknowledged within 1 hour. Always search the knowledge base before writing a new response. Enterprise customers get priority routing.",
+		"guidance": "Check the customer's plan to determine SLA. Use canned responses for common scenarios to save time. Link resolved tickets to relevant KB articles."
+	}
+}

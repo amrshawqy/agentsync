@@ -1,0 +1,126 @@
+{
+	"slug": "finance",
+	"name": "Finance",
+	"description": "Financial management — accounts, invoices, expenses, payments, and budgets",
+	"category": "finance",
+	"version": 1,
+	"tables": [
+		{
+			"slug": "accounts",
+			"name": "Accounts",
+			"description": "Chart of accounts for financial tracking",
+			"agentHint": "A financial account (e.g. Revenue, Operating Expenses). Link invoices and expenses to an account for proper categorization.",
+			"fields": [
+				{ "slug": "name", "name": "Account Name", "fieldType": "text", "isRequired": true, "isIndexed": true },
+				{ "slug": "code", "name": "Account Code", "fieldType": "text", "isRequired": true, "isIndexed": true, "validation": { "unique": true }, "agentHint": "Numeric code like 1000, 2000, 5000" },
+				{ "slug": "type", "name": "Account Type", "fieldType": "select", "isRequired": true, "isIndexed": true, "options": [
+					{ "value": "asset", "label": "Asset" }, { "value": "liability", "label": "Liability" }, { "value": "equity", "label": "Equity" }, { "value": "revenue", "label": "Revenue" }, { "value": "expense", "label": "Expense" }
+				] },
+				{ "slug": "balance", "name": "Current Balance", "fieldType": "currency", "agentHint": "Running balance — updated by payments and transactions" },
+				{ "slug": "is_active", "name": "Active", "fieldType": "boolean", "isRequired": true }
+			]
+		},
+		{
+			"slug": "invoices",
+			"name": "Invoices",
+			"description": "Invoices sent to customers",
+			"agentHint": "An invoice sent to a customer. Link to the relevant account. Track through payment pipeline.",
+			"fields": [
+				{ "slug": "number", "name": "Invoice Number", "fieldType": "text", "isRequired": true, "isIndexed": true, "validation": { "unique": true } },
+				{ "slug": "customer", "name": "Customer", "fieldType": "text", "isRequired": true, "isIndexed": true },
+				{ "slug": "account_id", "name": "Account", "fieldType": "relation", "isIndexed": true, "relationConfig": { "targetTable": "accounts", "displayField": "name", "reverseName": "invoices" }, "agentHint": "The revenue account this invoice is booked to" },
+				{ "slug": "amount", "name": "Amount", "fieldType": "currency", "isRequired": true },
+				{ "slug": "status", "name": "Status", "fieldType": "select", "isRequired": true, "isIndexed": true, "options": [
+					{ "value": "draft", "label": "Draft" }, { "value": "sent", "label": "Sent" }, { "value": "paid", "label": "Paid" }, { "value": "overdue", "label": "Overdue" }, { "value": "cancelled", "label": "Cancelled" }
+				], "constraints": { "transitions": { "draft": ["sent", "cancelled"], "sent": ["paid", "overdue", "cancelled"], "overdue": ["paid", "cancelled"], "paid": [], "cancelled": [] } } },
+				{ "slug": "issue_date", "name": "Issue Date", "fieldType": "date", "isRequired": true },
+				{ "slug": "due_date", "name": "Due Date", "fieldType": "date" },
+				{ "slug": "notes", "name": "Notes", "fieldType": "text" }
+			]
+		},
+		{
+			"slug": "expenses",
+			"name": "Expenses",
+			"description": "Team expenses with approval workflow",
+			"agentHint": "An expense incurred by the team. Must have a category and amount. Link to an expense account.",
+			"fields": [
+				{ "slug": "description", "name": "Description", "fieldType": "text", "isRequired": true },
+				{ "slug": "amount", "name": "Amount", "fieldType": "currency", "isRequired": true },
+				{ "slug": "account_id", "name": "Account", "fieldType": "relation", "isIndexed": true, "relationConfig": { "targetTable": "accounts", "displayField": "name", "reverseName": "expenses" }, "agentHint": "The expense account this is charged to" },
+				{ "slug": "category", "name": "Category", "fieldType": "select", "isRequired": true, "options": [
+					{ "value": "travel", "label": "Travel" }, { "value": "software", "label": "Software" }, { "value": "hardware", "label": "Hardware" }, { "value": "office", "label": "Office" }, { "value": "other", "label": "Other" }
+				] },
+				{ "slug": "date", "name": "Date", "fieldType": "date", "isRequired": true },
+				{ "slug": "status", "name": "Status", "fieldType": "select", "isRequired": true, "options": [
+					{ "value": "pending", "label": "Pending" }, { "value": "approved", "label": "Approved" }, { "value": "rejected", "label": "Rejected" }, { "value": "reimbursed", "label": "Reimbursed" }
+				], "constraints": { "transitions": { "pending": ["approved", "rejected"], "approved": ["reimbursed"], "rejected": [], "reimbursed": [] } } },
+				{ "slug": "submitted_by", "name": "Submitted By", "fieldType": "text", "isIndexed": true }
+			]
+		},
+		{
+			"slug": "payments",
+			"name": "Payments",
+			"description": "Payment records for invoices and expenses",
+			"agentHint": "A payment received or made. Link to the corresponding invoice or expense.",
+			"fields": [
+				{ "slug": "reference", "name": "Reference", "fieldType": "text", "isRequired": true, "isIndexed": true, "validation": { "unique": true }, "agentHint": "Payment reference or transaction ID" },
+				{ "slug": "type", "name": "Type", "fieldType": "select", "isRequired": true, "isIndexed": true, "options": [
+					{ "value": "incoming", "label": "Incoming" }, { "value": "outgoing", "label": "Outgoing" }
+				], "agentHint": "Incoming = customer payment received; Outgoing = expense reimbursement or vendor payment" },
+				{ "slug": "amount", "name": "Amount", "fieldType": "currency", "isRequired": true },
+				{ "slug": "method", "name": "Payment Method", "fieldType": "select", "options": [
+					{ "value": "bank_transfer", "label": "Bank Transfer" }, { "value": "credit_card", "label": "Credit Card" }, { "value": "check", "label": "Check" }, { "value": "cash", "label": "Cash" }
+				] },
+				{ "slug": "invoice_id", "name": "Invoice", "fieldType": "relation", "isIndexed": true, "relationConfig": { "targetTable": "invoices", "displayField": "number", "reverseName": "payments" }, "agentHint": "The invoice this payment is for (for incoming payments)" },
+				{ "slug": "date", "name": "Payment Date", "fieldType": "date", "isRequired": true },
+				{ "slug": "status", "name": "Status", "fieldType": "select", "isRequired": true, "options": [
+					{ "value": "pending", "label": "Pending" }, { "value": "completed", "label": "Completed" }, { "value": "failed", "label": "Failed" }
+				], "constraints": { "transitions": { "pending": ["completed", "failed"], "completed": [], "failed": [] } } },
+				{ "slug": "notes", "name": "Notes", "fieldType": "text" }
+			]
+		},
+		{
+			"slug": "budgets",
+			"name": "Budgets",
+			"description": "Budget allocations by account and period",
+			"agentHint": "A budget allocation for a specific account and time period. Compare actual expenses against budget to track spending.",
+			"fields": [
+				{ "slug": "name", "name": "Budget Name", "fieldType": "text", "isRequired": true, "isIndexed": true, "agentHint": "E.g. Q1 2026 Marketing, Annual Engineering" },
+				{ "slug": "account_id", "name": "Account", "fieldType": "relation", "isRequired": true, "isIndexed": true, "relationConfig": { "targetTable": "accounts", "displayField": "name", "reverseName": "budgets" }, "agentHint": "The account this budget is allocated to" },
+				{ "slug": "amount", "name": "Budget Amount", "fieldType": "currency", "isRequired": true },
+				{ "slug": "spent", "name": "Amount Spent", "fieldType": "currency", "agentHint": "Running total of actual spending against this budget" },
+				{ "slug": "period_start", "name": "Period Start", "fieldType": "date", "isRequired": true },
+				{ "slug": "period_end", "name": "Period End", "fieldType": "date", "isRequired": true },
+				{ "slug": "status", "name": "Status", "fieldType": "select", "isRequired": true, "options": [
+					{ "value": "draft", "label": "Draft" }, { "value": "active", "label": "Active" }, { "value": "closed", "label": "Closed" }
+				], "constraints": { "transitions": { "draft": ["active"], "active": ["closed"], "closed": [] } } }
+			]
+		}
+	],
+	"seedData": {
+		"accounts": [
+			{ "name": "Revenue", "code": "4000", "type": "revenue", "balance": 125000, "is_active": true },
+			{ "name": "Operating Expenses", "code": "5000", "type": "expense", "balance": 45000, "is_active": true },
+			{ "name": "Software & Tools", "code": "5100", "type": "expense", "balance": 8500, "is_active": true }
+		],
+		"invoices": [
+			{ "number": "INV-2026-001", "customer": "TechCorp", "account_id": "@ref:accounts:0", "amount": 15000, "status": "sent", "issue_date": "2026-02-01", "due_date": "2026-03-01" },
+			{ "number": "INV-2026-002", "customer": "DataFlow", "account_id": "@ref:accounts:0", "amount": 7500, "status": "paid", "issue_date": "2026-01-15", "due_date": "2026-02-15" }
+		],
+		"expenses": [
+			{ "description": "AWS hosting - February", "amount": 2400, "account_id": "@ref:accounts:1", "category": "software", "date": "2026-02-28", "status": "approved", "submitted_by": "DevOps Team" },
+			{ "description": "Team offsite travel", "amount": 3200, "account_id": "@ref:accounts:1", "category": "travel", "date": "2026-02-15", "status": "reimbursed", "submitted_by": "Alice Chen" }
+		],
+		"payments": [
+			{ "reference": "PAY-2026-001", "type": "incoming", "amount": 7500, "method": "bank_transfer", "invoice_id": "@ref:invoices:1", "date": "2026-02-14", "status": "completed" }
+		],
+		"budgets": [
+			{ "name": "Q1 2026 Engineering", "account_id": "@ref:accounts:1", "amount": 50000, "spent": 12000, "period_start": "2026-01-01", "period_end": "2026-03-31", "status": "active" },
+			{ "name": "Q1 2026 Software", "account_id": "@ref:accounts:2", "amount": 15000, "spent": 8500, "period_start": "2026-01-01", "period_end": "2026-03-31", "status": "active" }
+		]
+	},
+	"instructions": {
+		"rules": "Invoices overdue by more than 30 days must be escalated. Expenses over $5,000 require director approval. Payments must be linked to their corresponding invoice. Budget utilization above 90% should trigger an alert.",
+		"guidance": "When recording a payment, update the corresponding invoice status to 'paid'. Track budget spending in real time — compare expenses against budgets for the current period."
+	}
+}

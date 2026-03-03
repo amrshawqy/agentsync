@@ -1,0 +1,127 @@
+{
+	"slug": "hr",
+	"name": "HR",
+	"description": "Human Resources — employees, departments, positions, reviews, and leave management",
+	"category": "hr",
+	"version": 1,
+	"tables": [
+		{
+			"slug": "departments",
+			"name": "Departments",
+			"description": "Organizational departments or teams",
+			"agentHint": "A department groups employees. Use this to understand org structure. Link employees to their department.",
+			"fields": [
+				{ "slug": "name", "name": "Department Name", "fieldType": "text", "isRequired": true, "isIndexed": true, "agentHint": "Official department name" },
+				{ "slug": "code", "name": "Code", "fieldType": "text", "isIndexed": true, "validation": { "unique": true }, "agentHint": "Short code like ENG, MKT, HR" },
+				{ "slug": "head_id", "name": "Department Head", "fieldType": "relation", "isIndexed": true, "relationConfig": { "targetTable": "employees", "displayField": "name", "reverseName": "headed_departments" }, "agentHint": "The employee who leads this department" },
+				{ "slug": "parent_id", "name": "Parent Department", "fieldType": "relation", "relationConfig": { "targetTable": "departments", "displayField": "name", "reverseName": "sub_departments" }, "agentHint": "Parent department for hierarchical org charts" },
+				{ "slug": "status", "name": "Status", "fieldType": "select", "isRequired": true, "options": [
+					{ "value": "active", "label": "Active" }, { "value": "inactive", "label": "Inactive" }
+				] },
+				{ "slug": "description", "name": "Description", "fieldType": "text" }
+			]
+		},
+		{
+			"slug": "positions",
+			"name": "Positions",
+			"description": "Job positions and open roles within departments",
+			"agentHint": "A position defines a role within a department. Can be filled or open. Link to a department.",
+			"fields": [
+				{ "slug": "title", "name": "Position Title", "fieldType": "text", "isRequired": true, "isIndexed": true },
+				{ "slug": "department_id", "name": "Department", "fieldType": "relation", "isRequired": true, "isIndexed": true, "relationConfig": { "targetTable": "departments", "displayField": "name", "reverseName": "positions" }, "agentHint": "The department this position belongs to" },
+				{ "slug": "level", "name": "Level", "fieldType": "select", "options": [
+					{ "value": "junior", "label": "Junior" }, { "value": "mid", "label": "Mid" }, { "value": "senior", "label": "Senior" }, { "value": "lead", "label": "Lead" }, { "value": "manager", "label": "Manager" }, { "value": "director", "label": "Director" }
+				] },
+				{ "slug": "status", "name": "Status", "fieldType": "select", "isRequired": true, "isIndexed": true, "options": [
+					{ "value": "open", "label": "Open" }, { "value": "filled", "label": "Filled" }, { "value": "closed", "label": "Closed" }
+				], "constraints": { "transitions": { "open": ["filled", "closed"], "filled": ["open", "closed"], "closed": [] } } },
+				{ "slug": "headcount", "name": "Headcount", "fieldType": "number", "validation": { "min": 1 }, "agentHint": "Number of people needed for this position" },
+				{ "slug": "description", "name": "Description", "fieldType": "text" }
+			]
+		},
+		{
+			"slug": "employees",
+			"name": "Employees",
+			"description": "Employee records with department and manager relations",
+			"agentHint": "An employee record. Sensitive data — respect field access permissions. Link to department and manager.",
+			"fields": [
+				{ "slug": "name", "name": "Full Name", "fieldType": "text", "isRequired": true, "isIndexed": true },
+				{ "slug": "email", "name": "Work Email", "fieldType": "email", "isRequired": true, "isIndexed": true },
+				{ "slug": "department_id", "name": "Department", "fieldType": "relation", "isIndexed": true, "relationConfig": { "targetTable": "departments", "displayField": "name", "reverseName": "employees" }, "agentHint": "The department this employee belongs to" },
+				{ "slug": "manager_id", "name": "Manager", "fieldType": "relation", "isIndexed": true, "relationConfig": { "targetTable": "employees", "displayField": "name", "reverseName": "direct_reports" }, "agentHint": "This employee's direct manager" },
+				{ "slug": "position_id", "name": "Position", "fieldType": "relation", "isIndexed": true, "relationConfig": { "targetTable": "positions", "displayField": "title", "reverseName": "employees" }, "agentHint": "The position this employee holds" },
+				{ "slug": "title", "name": "Job Title", "fieldType": "text" },
+				{ "slug": "start_date", "name": "Start Date", "fieldType": "date", "isRequired": true },
+				{ "slug": "status", "name": "Status", "fieldType": "select", "isRequired": true, "isIndexed": true, "options": [
+					{ "value": "active", "label": "Active" }, { "value": "on_leave", "label": "On Leave" }, { "value": "offboarded", "label": "Offboarded" }
+				], "constraints": { "transitions": { "active": ["on_leave", "offboarded"], "on_leave": ["active", "offboarded"], "offboarded": [] } } },
+				{ "slug": "phone", "name": "Phone", "fieldType": "phone" }
+			]
+		},
+		{
+			"slug": "reviews",
+			"name": "Performance Reviews",
+			"description": "Employee performance reviews and assessments",
+			"agentHint": "A performance review for an employee. Always link to the employee being reviewed and the reviewer.",
+			"fields": [
+				{ "slug": "employee_id", "name": "Employee", "fieldType": "relation", "isRequired": true, "isIndexed": true, "relationConfig": { "targetTable": "employees", "displayField": "name", "reverseName": "reviews" }, "agentHint": "The employee being reviewed" },
+				{ "slug": "reviewer_id", "name": "Reviewer", "fieldType": "relation", "isRequired": true, "isIndexed": true, "relationConfig": { "targetTable": "employees", "displayField": "name", "reverseName": "reviews_given" }, "agentHint": "The person conducting the review (usually the manager)" },
+				{ "slug": "period", "name": "Review Period", "fieldType": "text", "isRequired": true, "agentHint": "E.g. Q1 2026, H1 2026, Annual 2025" },
+				{ "slug": "rating", "name": "Rating", "fieldType": "select", "isRequired": true, "options": [
+					{ "value": "exceeds", "label": "Exceeds Expectations" }, { "value": "meets", "label": "Meets Expectations" }, { "value": "developing", "label": "Developing" }, { "value": "below", "label": "Below Expectations" }
+				] },
+				{ "slug": "status", "name": "Status", "fieldType": "select", "isRequired": true, "isIndexed": true, "options": [
+					{ "value": "draft", "label": "Draft" }, { "value": "submitted", "label": "Submitted" }, { "value": "acknowledged", "label": "Acknowledged" }
+				], "constraints": { "transitions": { "draft": ["submitted"], "submitted": ["acknowledged"], "acknowledged": [] } } },
+				{ "slug": "strengths", "name": "Strengths", "fieldType": "text" },
+				{ "slug": "improvements", "name": "Areas for Improvement", "fieldType": "text" },
+				{ "slug": "goals", "name": "Goals for Next Period", "fieldType": "text" }
+			]
+		},
+		{
+			"slug": "leave_requests",
+			"name": "Leave Requests",
+			"description": "Employee leave requests with approval workflow",
+			"agentHint": "Leave request linked to an employee. Approval flow is enforced.",
+			"fields": [
+				{ "slug": "employee_id", "name": "Employee", "fieldType": "relation", "isRequired": true, "isIndexed": true, "relationConfig": { "targetTable": "employees", "displayField": "name", "reverseName": "leave_requests" }, "agentHint": "The employee requesting leave" },
+				{ "slug": "type", "name": "Leave Type", "fieldType": "select", "isRequired": true, "options": [
+					{ "value": "vacation", "label": "Vacation" }, { "value": "sick", "label": "Sick" }, { "value": "personal", "label": "Personal" }
+				] },
+				{ "slug": "start_date", "name": "Start Date", "fieldType": "date", "isRequired": true },
+				{ "slug": "end_date", "name": "End Date", "fieldType": "date", "isRequired": true },
+				{ "slug": "status", "name": "Status", "fieldType": "select", "isRequired": true, "options": [
+					{ "value": "pending", "label": "Pending" }, { "value": "approved", "label": "Approved" }, { "value": "rejected", "label": "Rejected" }
+				], "constraints": { "transitions": { "pending": ["approved", "rejected"], "approved": [], "rejected": [] } } },
+				{ "slug": "reason", "name": "Reason", "fieldType": "text" }
+			]
+		}
+	],
+	"seedData": {
+		"departments": [
+			{ "name": "Engineering", "code": "ENG", "status": "active", "description": "Software engineering and platform development" },
+			{ "name": "Marketing", "code": "MKT", "status": "active", "description": "Brand, content, and demand generation" },
+			{ "name": "Human Resources", "code": "HR", "status": "active", "description": "People operations and talent management" }
+		],
+		"positions": [
+			{ "title": "Senior Software Engineer", "department_id": "@ref:departments:0", "level": "senior", "status": "filled", "headcount": 3 },
+			{ "title": "Marketing Manager", "department_id": "@ref:departments:1", "level": "manager", "status": "filled", "headcount": 1 },
+			{ "title": "Junior Developer", "department_id": "@ref:departments:0", "level": "junior", "status": "open", "headcount": 2 }
+		],
+		"employees": [
+			{ "name": "Alice Chen", "email": "alice@company.com", "department_id": "@ref:departments:0", "position_id": "@ref:positions:0", "title": "Senior Software Engineer", "start_date": "2023-03-15", "status": "active" },
+			{ "name": "Bob Martinez", "email": "bob@company.com", "department_id": "@ref:departments:1", "position_id": "@ref:positions:1", "title": "Marketing Manager", "start_date": "2022-08-01", "status": "active" },
+			{ "name": "Carol Davis", "email": "carol@company.com", "department_id": "@ref:departments:2", "title": "HR Director", "start_date": "2021-01-10", "status": "active" }
+		],
+		"reviews": [
+			{ "employee_id": "@ref:employees:0", "reviewer_id": "@ref:employees:2", "period": "H2 2025", "rating": "exceeds", "status": "acknowledged", "strengths": "Excellent problem-solving and mentorship", "goals": "Lead architecture initiative in Q1" }
+		],
+		"leave_requests": [
+			{ "employee_id": "@ref:employees:1", "type": "vacation", "start_date": "2026-03-20", "end_date": "2026-03-27", "status": "approved", "reason": "Spring break family trip" }
+		]
+	},
+	"instructions": {
+		"rules": "Leave requests longer than 10 days require HR director approval. Performance reviews must be completed within 2 weeks of the review period ending. Offboarded employees cannot submit leave requests.",
+		"guidance": "When looking up an employee, also check their department and manager for full context. Flag reviews that are past due."
+	}
+}
