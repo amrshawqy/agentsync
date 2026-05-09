@@ -8,6 +8,10 @@
 
 > 🚧 **Alpha software.** APIs and schemas may change between 0.x releases. Track [CHANGELOG.md](./CHANGELOG.md). Not yet recommended for unattended production use.
 
+## For AI agents
+
+If you are an agent (or pointing one at this server), read **[SKILL.md](./SKILL.md)** — a single self-contained guide to install, connect, set up, and operate AgentSync end-to-end. Every running deployment also serves it live at `<your-base-url>/skill.md`, so you can tell a teammate's agent: "go to `https://agentsync.acme.com/skill.md`" and it will pick up everything from there.
+
 ## What you get
 
 - **One MCP URL** — paste it into any agent. The agent triggers the standard OAuth flow on first use; users see a familiar browser sign-in.
