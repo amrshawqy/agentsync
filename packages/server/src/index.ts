@@ -1,3 +1,6 @@
+import { readFile } from 'node:fs/promises';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { createDb } from '@agentsync/db';
 import { serve } from '@hono/node-server';
 import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js';
@@ -120,6 +123,30 @@ async function main() {
 			token_endpoint_auth_methods_supported: ['client_secret_post', 'none'],
 			scopes_supported: ['mcp:tools', 'mcp:resources'],
 		});
+	});
+
+	// Serve SKILL.md so any agent can fetch <base>/skill.md as a self-contained guide.
+	const skillCandidates = [
+		path.resolve(process.cwd(), 'SKILL.md'),
+		path.resolve(process.cwd(), '../../SKILL.md'),
+		path.resolve(fileURLToPath(import.meta.url), '../../../../SKILL.md'),
+	];
+	let cachedSkill: string | null = null;
+	app.get('/skill.md', async (c) => {
+		if (!cachedSkill) {
+			for (const p of skillCandidates) {
+				try {
+					cachedSkill = await readFile(p, 'utf8');
+					break;
+				} catch {}
+			}
+		}
+		if (!cachedSkill) {
+			return c.text('SKILL.md not found on this deployment', 404);
+		}
+		c.header('Content-Type', 'text/markdown; charset=utf-8');
+		c.header('Cache-Control', 'public, max-age=300');
+		return c.body(cachedSkill);
 	});
 
 	const wwwAuthHeader = `Bearer realm="agentsync", resource_metadata="${config.PUBLIC_BASE_URL}${protectedResourceMetadataPath}"`;
