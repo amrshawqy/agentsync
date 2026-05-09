@@ -22,8 +22,8 @@
   },
   "dependencies": {
     "@agentsync/types": "workspace:*",
-    "drizzle-orm": "^0.36.4",
-    "postgres": "^3.4.5"
+    "drizzle-orm": "^0.45.2",
+    "postgres": "^3.4.9"
   },
   "devDependencies": {
     "@types/node": "^25.3.2",
