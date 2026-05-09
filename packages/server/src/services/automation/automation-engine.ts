@@ -1,11 +1,11 @@
 import type { EventPayload } from '@agentsync/types';
-import type { EventDispatcher } from '../event/dispatcher.js';
-import type { AutomationService } from './automation.service.js';
-import type { DataService } from '../data/data.service.js';
-import type { EventService } from '../event/event.service.js';
-import { validateWebhookUrl } from '../../infra/url-validator.js';
 import { getWebhookUrlConfig } from '../../config.js';
 import { logger } from '../../infra/logger.js';
+import { validateWebhookUrl } from '../../infra/url-validator.js';
+import type { DataService } from '../data/data.service.js';
+import type { EventDispatcher } from '../event/dispatcher.js';
+import type { EventService } from '../event/event.service.js';
+import type { AutomationService } from './automation.service.js';
 
 const CONSUMER_GROUP = 'automation-engine';
 const CONSUMER_NAME = 'worker-1';
@@ -172,9 +172,7 @@ export class AutomationEngine {
 					case 'create_record': {
 						if (!action.tableId) break;
 						const createCtx = this.buildSystemContext(event.teamId);
-						const createData = action.data
-							? this.interpolateEventData(action.data, event)
-							: {};
+						const createData = action.data ? this.interpolateEventData(action.data, event) : {};
 						await this.dataService.createRecord(createCtx, {
 							tableId: action.tableId,
 							data: createData,
@@ -185,9 +183,7 @@ export class AutomationEngine {
 						const targetId = action.recordId ?? event.recordId;
 						if (!targetId) break;
 						const updateCtx = this.buildSystemContext(event.teamId);
-						const updateData = action.data
-							? this.interpolateEventData(action.data, event)
-							: {};
+						const updateData = action.data ? this.interpolateEventData(action.data, event) : {};
 						await this.dataService.updateRecord(updateCtx, targetId, { data: updateData });
 						break;
 					}

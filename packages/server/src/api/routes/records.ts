@@ -1,8 +1,8 @@
+import type { RequestContext } from '@agentsync/types';
 import { Hono } from 'hono';
 import type { ServiceContainer } from '../../services/index.js';
-import { authMiddleware } from '../middleware/auth.js';
-import type { RequestContext } from '@agentsync/types';
 import { parseCsv } from '../../utils/csv-parser.js';
+import { authMiddleware } from '../middleware/auth.js';
 
 function getCtx(c: any): RequestContext {
 	return {
@@ -68,6 +68,43 @@ export function createRecordRoutes(services: ServiceContainer): Hono {
 		});
 
 		return c.json({ success: true, ...result });
+	});
+
+	// List revisions for a record
+	app.get('/:id/revisions', async (c) => {
+		const ctx = getCtx(c);
+		// Confirm read permission via getRecord (also checks team isolation)
+		const record = await services.data.getRecord(ctx, c.req.param('id'));
+		if (!record) return c.json({ error: { code: 'NOT_FOUND', message: 'Record not found' } }, 404);
+
+		const limit = c.req.query('limit') ? Number(c.req.query('limit')) : 25;
+		const offset = c.req.query('offset') ? Number(c.req.query('offset')) : 0;
+		const result = await services.revision.list({
+			recordId: c.req.param('id'),
+			teamId: ctx.teamId,
+			limit,
+			offset,
+		});
+		return c.json({ success: true, ...result });
+	});
+
+	// Revert a record to a prior revision
+	app.post('/:id/revert', async (c) => {
+		const ctx = getCtx(c);
+		const body = await c.req.json().catch(() => ({}));
+		if (!body.revisionId && !body.to_revision_id) {
+			return c.json(
+				{ error: { code: 'VALIDATION_ERROR', message: 'revisionId is required' } },
+				400,
+			);
+		}
+		const revisionId = (body.revisionId ?? body.to_revision_id) as string;
+		try {
+			const record = await services.data.revertRecord(ctx, c.req.param('id'), revisionId);
+			return c.json({ success: true, data: record });
+		} catch (err) {
+			return c.json({ error: { code: 'REVERT_FAILED', message: String(err) } }, 400);
+		}
 	});
 
 	// Get provenance
@@ -160,7 +197,11 @@ export function createRecordRoutes(services: ServiceContainer): Hono {
 			const mappingStr = formData.get('fieldMapping') as string;
 			if (mappingStr) fieldMapping = JSON.parse(mappingStr);
 			const file = formData.get('file') as File;
-			if (!file) return c.json({ error: { code: 'VALIDATION_ERROR', message: 'CSV file is required' } }, 400);
+			if (!file)
+				return c.json(
+					{ error: { code: 'VALIDATION_ERROR', message: 'CSV file is required' } },
+					400,
+				);
 			csvContent = await file.text();
 		} else {
 			const body = await c.req.json();
@@ -171,12 +212,18 @@ export function createRecordRoutes(services: ServiceContainer): Hono {
 		}
 
 		if (!tableId || !csvContent) {
-			return c.json({ error: { code: 'VALIDATION_ERROR', message: 'tableId and csv content are required' } }, 400);
+			return c.json(
+				{ error: { code: 'VALIDATION_ERROR', message: 'tableId and csv content are required' } },
+				400,
+			);
 		}
 
 		const parsed = parseCsv(csvContent, { fieldMapping, delimiter });
 		if (parsed.length === 0) {
-			return c.json({ error: { code: 'VALIDATION_ERROR', message: 'CSV file contains no data rows' } }, 400);
+			return c.json(
+				{ error: { code: 'VALIDATION_ERROR', message: 'CSV file contains no data rows' } },
+				400,
+			);
 		}
 
 		const records = await services.data.bulkImport(ctx, tableId, parsed);

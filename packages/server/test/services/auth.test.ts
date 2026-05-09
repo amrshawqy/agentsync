@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { AuthService } from '../../src/services/auth/auth.service.js';
 
 function createMockDeps() {
@@ -101,12 +101,14 @@ describe('AuthService', () => {
 
 		// The PKCE verifier must match the challenge. Since we're mocking,
 		// we test that exchangeCode calls the right DB methods.
-		await expect(service.exchangeCode({
-			code: 'test-code',
-			clientId: 'client-1',
-			redirectUri: 'http://localhost/callback',
-			codeVerifier: 'verifier',
-		})).rejects.toThrow(); // Will fail on PKCE check with mock data
+		await expect(
+			service.exchangeCode({
+				code: 'test-code',
+				clientId: 'client-1',
+				redirectUri: 'http://localhost/callback',
+				codeVerifier: 'verifier',
+			}),
+		).rejects.toThrow(); // Will fail on PKCE check with mock data
 
 		expect(deps.db.select).toHaveBeenCalled();
 	});

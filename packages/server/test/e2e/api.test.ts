@@ -1,9 +1,9 @@
-import { describe, it, expect, vi } from 'vitest';
-import { EventService } from '../../src/services/event/event.service.js';
-import { SSEManager } from '../../src/services/event/sse-manager.js';
+import type { EventPayload } from '@agentsync/types';
+import { describe, expect, it, vi } from 'vitest';
 import { AutomationEngine } from '../../src/services/automation/automation-engine.js';
 import { MarketplaceService } from '../../src/services/blueprint/marketplace.service.js';
-import type { EventPayload } from '@agentsync/types';
+import { EventService } from '../../src/services/event/event.service.js';
+import { SSEManager } from '../../src/services/event/sse-manager.js';
 
 describe('EventService', () => {
 	it('filters webhook subscriptions by workspaceId', async () => {
@@ -92,7 +92,7 @@ describe('EventService', () => {
 		await eventService.emit({
 			eventType: 'record.created',
 			teamId: 'team-1',
-			tableId: 'table-2',  // Different table!
+			tableId: 'table-2', // Different table!
 			data: {},
 		});
 
@@ -131,12 +131,7 @@ describe('SSEManager', () => {
 
 describe('AutomationEngine', () => {
 	it('matchesTrigger checks eventType', () => {
-		const engine = new AutomationEngine(
-			{} as any,
-			{} as any,
-			{} as any,
-			{} as any,
-		);
+		const engine = new AutomationEngine({} as any, {} as any, {} as any, {} as any);
 
 		const event: EventPayload = {
 			eventId: 'evt-1',
@@ -152,12 +147,7 @@ describe('AutomationEngine', () => {
 	});
 
 	it('matchesTrigger checks table', () => {
-		const engine = new AutomationEngine(
-			{} as any,
-			{} as any,
-			{} as any,
-			{} as any,
-		);
+		const engine = new AutomationEngine({} as any, {} as any, {} as any, {} as any);
 
 		const event: EventPayload = {
 			eventId: 'evt-1',
@@ -173,12 +163,7 @@ describe('AutomationEngine', () => {
 	});
 
 	it('matchesTrigger checks condition', () => {
-		const engine = new AutomationEngine(
-			{} as any,
-			{} as any,
-			{} as any,
-			{} as any,
-		);
+		const engine = new AutomationEngine({} as any, {} as any, {} as any, {} as any);
 
 		const event: EventPayload = {
 			eventId: 'evt-1',
@@ -193,12 +178,7 @@ describe('AutomationEngine', () => {
 	});
 
 	it('matchesTrigger returns true for empty trigger', () => {
-		const engine = new AutomationEngine(
-			{} as any,
-			{} as any,
-			{} as any,
-			{} as any,
-		);
+		const engine = new AutomationEngine({} as any, {} as any, {} as any, {} as any);
 
 		const event: EventPayload = {
 			eventId: 'evt-1',

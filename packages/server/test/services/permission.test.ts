@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { PermissionService } from '../../src/services/auth/permission.service.js';
 
 // Mock drizzle-orm so the import in permission.service doesn't break

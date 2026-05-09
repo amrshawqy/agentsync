@@ -1,0 +1,42 @@
+name: Feature request
+description: Suggest a feature, capability, or improvement.
+title: '[feature] '
+labels: ['enhancement']
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem are you solving?
+      description: Describe the user / operator pain. Concrete scenarios beat abstract wishes.
+      placeholder: 'When I onboard a non-technical teammate, they have to …'
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: What would you like to see?
+      description: Sketch the API, UI, or behavior. Doesn't need to be final.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+    validations:
+      required: false
+
+  - type: dropdown
+    id: scope
+    attributes:
+      label: Surface area
+      options:
+        - Server (REST / MCP)
+        - Web app
+        - SDK
+        - Helm chart / Docker
+        - Docs
+        - Other / cross-cutting
+    validations:
+      required: true

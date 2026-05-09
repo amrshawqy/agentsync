@@ -1,6 +1,6 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { ConstraintService } from '../../src/services/schema/constraint.service.js';
 import type { SchemaField } from '@agentsync/types';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { ConstraintService } from '../../src/services/schema/constraint.service.js';
 
 function createMockSchemaService(fields: Partial<SchemaField>[]) {
 	return {
@@ -8,7 +8,9 @@ function createMockSchemaService(fields: Partial<SchemaField>[]) {
 	} as any;
 }
 
-function makeField(overrides: Partial<SchemaField> & { slug: string; name: string; fieldType: string }): Partial<SchemaField> {
+function makeField(
+	overrides: Partial<SchemaField> & { slug: string; name: string; fieldType: string },
+): Partial<SchemaField> {
 	return {
 		isRequired: false,
 		validation: null,
@@ -20,7 +22,9 @@ function makeField(overrides: Partial<SchemaField> & { slug: string; name: strin
 
 describe('ConstraintService', () => {
 	it('returns REQUIRED_FIELD_MISSING when required field missing on create', async () => {
-		const fields = [makeField({ slug: 'title', name: 'Title', fieldType: 'text', isRequired: true })];
+		const fields = [
+			makeField({ slug: 'title', name: 'Title', fieldType: 'text', isRequired: true }),
+		];
 		const schemaService = createMockSchemaService(fields);
 		const service = new ConstraintService(schemaService);
 
@@ -32,7 +36,9 @@ describe('ConstraintService', () => {
 	});
 
 	it('returns REQUIRED_FIELD_MISSING when required field set to null on update', async () => {
-		const fields = [makeField({ slug: 'title', name: 'Title', fieldType: 'text', isRequired: true })];
+		const fields = [
+			makeField({ slug: 'title', name: 'Title', fieldType: 'text', isRequired: true }),
+		];
 		const schemaService = createMockSchemaService(fields);
 		const service = new ConstraintService(schemaService);
 
@@ -99,12 +105,14 @@ describe('ConstraintService', () => {
 	});
 
 	it('returns INVALID_FIELD_TYPE for multi_select with non-array', async () => {
-		const fields = [makeField({
-			slug: 'tags',
-			name: 'Tags',
-			fieldType: 'multi_select',
-			options: [{ value: 'a' }, { value: 'b' }],
-		})];
+		const fields = [
+			makeField({
+				slug: 'tags',
+				name: 'Tags',
+				fieldType: 'multi_select',
+				options: [{ value: 'a' }, { value: 'b' }],
+			}),
+		];
 		const schemaService = createMockSchemaService(fields);
 		const service = new ConstraintService(schemaService);
 
@@ -115,12 +123,14 @@ describe('ConstraintService', () => {
 	});
 
 	it('returns VALIDATION_ERROR for number below min', async () => {
-		const fields = [makeField({
-			slug: 'score',
-			name: 'Score',
-			fieldType: 'number',
-			validation: { min: 0 },
-		})];
+		const fields = [
+			makeField({
+				slug: 'score',
+				name: 'Score',
+				fieldType: 'number',
+				validation: { min: 0 },
+			}),
+		];
 		const schemaService = createMockSchemaService(fields);
 		const service = new ConstraintService(schemaService);
 
@@ -132,12 +142,14 @@ describe('ConstraintService', () => {
 	});
 
 	it('returns VALIDATION_ERROR for number above max', async () => {
-		const fields = [makeField({
-			slug: 'score',
-			name: 'Score',
-			fieldType: 'number',
-			validation: { max: 100 },
-		})];
+		const fields = [
+			makeField({
+				slug: 'score',
+				name: 'Score',
+				fieldType: 'number',
+				validation: { max: 100 },
+			}),
+		];
 		const schemaService = createMockSchemaService(fields);
 		const service = new ConstraintService(schemaService);
 
@@ -149,12 +161,14 @@ describe('ConstraintService', () => {
 	});
 
 	it('returns VALIDATION_ERROR for string below min length', async () => {
-		const fields = [makeField({
-			slug: 'name',
-			name: 'Name',
-			fieldType: 'text',
-			validation: { min: 3 },
-		})];
+		const fields = [
+			makeField({
+				slug: 'name',
+				name: 'Name',
+				fieldType: 'text',
+				validation: { min: 3 },
+			}),
+		];
 		const schemaService = createMockSchemaService(fields);
 		const service = new ConstraintService(schemaService);
 
@@ -166,12 +180,14 @@ describe('ConstraintService', () => {
 	});
 
 	it('returns VALIDATION_ERROR for string above max length', async () => {
-		const fields = [makeField({
-			slug: 'name',
-			name: 'Name',
-			fieldType: 'text',
-			validation: { max: 5 },
-		})];
+		const fields = [
+			makeField({
+				slug: 'name',
+				name: 'Name',
+				fieldType: 'text',
+				validation: { max: 5 },
+			}),
+		];
 		const schemaService = createMockSchemaService(fields);
 		const service = new ConstraintService(schemaService);
 
@@ -183,12 +199,14 @@ describe('ConstraintService', () => {
 	});
 
 	it('returns VALIDATION_ERROR for string not matching pattern', async () => {
-		const fields = [makeField({
-			slug: 'code',
-			name: 'Code',
-			fieldType: 'text',
-			validation: { pattern: '^[A-Z]{3}-\\d{3}$' },
-		})];
+		const fields = [
+			makeField({
+				slug: 'code',
+				name: 'Code',
+				fieldType: 'text',
+				validation: { pattern: '^[A-Z]{3}-\\d{3}$' },
+			}),
+		];
 		const schemaService = createMockSchemaService(fields);
 		const service = new ConstraintService(schemaService);
 
@@ -200,12 +218,14 @@ describe('ConstraintService', () => {
 	});
 
 	it('accepts semantic email pattern alias for valid emails', async () => {
-		const fields = [makeField({
-			slug: 'contact_email',
-			name: 'Contact Email',
-			fieldType: 'text',
-			validation: { pattern: 'email' },
-		})];
+		const fields = [
+			makeField({
+				slug: 'contact_email',
+				name: 'Contact Email',
+				fieldType: 'text',
+				validation: { pattern: 'email' },
+			}),
+		];
 		const schemaService = createMockSchemaService(fields);
 		const service = new ConstraintService(schemaService);
 
@@ -215,12 +235,14 @@ describe('ConstraintService', () => {
 	});
 
 	it('returns VALIDATION_ERROR for semantic email pattern alias mismatch', async () => {
-		const fields = [makeField({
-			slug: 'contact_email',
-			name: 'Contact Email',
-			fieldType: 'text',
-			validation: { pattern: 'email' },
-		})];
+		const fields = [
+			makeField({
+				slug: 'contact_email',
+				name: 'Contact Email',
+				fieldType: 'text',
+				validation: { pattern: 'email' },
+			}),
+		];
 		const schemaService = createMockSchemaService(fields);
 		const service = new ConstraintService(schemaService);
 
@@ -232,46 +254,46 @@ describe('ConstraintService', () => {
 	});
 
 	it('allows valid state machine transition with no violations', async () => {
-		const fields = [makeField({
-			slug: 'status',
-			name: 'Status',
-			fieldType: 'select',
-			options: [{ value: 'draft' }, { value: 'review' }, { value: 'published' }],
-			constraints: {
-				transitions: {
-					draft: ['review'],
-					review: ['published', 'draft'],
-					published: [],
+		const fields = [
+			makeField({
+				slug: 'status',
+				name: 'Status',
+				fieldType: 'select',
+				options: [{ value: 'draft' }, { value: 'review' }, { value: 'published' }],
+				constraints: {
+					transitions: {
+						draft: ['review'],
+						review: ['published', 'draft'],
+						published: [],
+					},
 				},
-			},
-		})];
+			}),
+		];
 		const schemaService = createMockSchemaService(fields);
 		const service = new ConstraintService(schemaService);
 
-		const violations = await service.validate(
-			'table-1',
-			{ status: 'review' },
-			{ status: 'draft' },
-		);
+		const violations = await service.validate('table-1', { status: 'review' }, { status: 'draft' });
 
 		const transitionViolations = violations.filter((v) => v.code === 'INVALID_STATE_TRANSITION');
 		expect(transitionViolations).toHaveLength(0);
 	});
 
 	it('returns INVALID_STATE_TRANSITION for disallowed state transition', async () => {
-		const fields = [makeField({
-			slug: 'status',
-			name: 'Status',
-			fieldType: 'select',
-			options: [{ value: 'draft' }, { value: 'review' }, { value: 'published' }],
-			constraints: {
-				transitions: {
-					draft: ['review'],
-					review: ['published', 'draft'],
-					published: [],
+		const fields = [
+			makeField({
+				slug: 'status',
+				name: 'Status',
+				fieldType: 'select',
+				options: [{ value: 'draft' }, { value: 'review' }, { value: 'published' }],
+				constraints: {
+					transitions: {
+						draft: ['review'],
+						review: ['published', 'draft'],
+						published: [],
+					},
 				},
-			},
-		})];
+			}),
+		];
 		const schemaService = createMockSchemaService(fields);
 		const service = new ConstraintService(schemaService);
 
@@ -285,12 +307,14 @@ describe('ConstraintService', () => {
 	});
 
 	it('returns INVALID_OPTION for select with invalid option', async () => {
-		const fields = [makeField({
-			slug: 'priority',
-			name: 'Priority',
-			fieldType: 'select',
-			options: [{ value: 'low' }, { value: 'medium' }, { value: 'high' }],
-		})];
+		const fields = [
+			makeField({
+				slug: 'priority',
+				name: 'Priority',
+				fieldType: 'select',
+				options: [{ value: 'low' }, { value: 'medium' }, { value: 'high' }],
+			}),
+		];
 		const schemaService = createMockSchemaService(fields);
 		const service = new ConstraintService(schemaService);
 
@@ -301,12 +325,14 @@ describe('ConstraintService', () => {
 	});
 
 	it('returns INVALID_OPTION for multi_select with invalid option', async () => {
-		const fields = [makeField({
-			slug: 'tags',
-			name: 'Tags',
-			fieldType: 'multi_select',
-			options: [{ value: 'bug' }, { value: 'feature' }, { value: 'docs' }],
-		})];
+		const fields = [
+			makeField({
+				slug: 'tags',
+				name: 'Tags',
+				fieldType: 'multi_select',
+				options: [{ value: 'bug' }, { value: 'feature' }, { value: 'docs' }],
+			}),
+		];
 		const schemaService = createMockSchemaService(fields);
 		const service = new ConstraintService(schemaService);
 
@@ -319,7 +345,12 @@ describe('ConstraintService', () => {
 		const fields = [
 			makeField({ slug: 'name', name: 'Name', fieldType: 'text', isRequired: true }),
 			makeField({ slug: 'email', name: 'Email', fieldType: 'email' }),
-			makeField({ slug: 'age', name: 'Age', fieldType: 'number', validation: { min: 0, max: 150 } }),
+			makeField({
+				slug: 'age',
+				name: 'Age',
+				fieldType: 'number',
+				validation: { min: 0, max: 150 },
+			}),
 		];
 		const schemaService = createMockSchemaService(fields);
 		const service = new ConstraintService(schemaService);

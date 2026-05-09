@@ -2,22 +2,39 @@ import { z } from 'zod';
 
 // Field types
 export const FieldType = z.enum([
-  'text', 'number', 'date', 'datetime', 'boolean',
-  'email', 'url', 'phone', 'currency',
-  'select', 'multi_select',
-  'relation', 'formula',
-  'user', 'json', 'rollup', 'attachment',
+	'text',
+	'number',
+	'date',
+	'datetime',
+	'boolean',
+	'email',
+	'url',
+	'phone',
+	'currency',
+	'select',
+	'multi_select',
+	'relation',
+	'formula',
+	'user',
+	'json',
+	'rollup',
+	'attachment',
 ]);
 export type FieldType = z.infer<typeof FieldType>;
 
 // Event types
 export const EventType = z.enum([
-  'record.created', 'record.updated', 'record.deleted',
-  'field.changed',
-  'relation.added', 'relation.removed',
-  'schema.evolved',
-  'blueprint.deployed', 'blueprint.evolved',
-  'member.joined', 'member.removed',
+	'record.created',
+	'record.updated',
+	'record.deleted',
+	'field.changed',
+	'relation.added',
+	'relation.removed',
+	'schema.evolved',
+	'blueprint.deployed',
+	'blueprint.evolved',
+	'member.joined',
+	'member.removed',
 ]);
 export type EventType = z.infer<typeof EventType>;
 
@@ -47,28 +64,45 @@ export type SuggestionStatus = z.infer<typeof SuggestionStatus>;
 
 // Audit action
 export const AuditAction = z.enum([
-  'create', 'read', 'update', 'delete', 'query',
-  'schema_change', 'login', 'logout', 'permission_change',
-  'blueprint_deploy', 'agent_kit_generate',
+	'create',
+	'read',
+	'update',
+	'delete',
+	'query',
+	'schema_change',
+	'login',
+	'logout',
+	'permission_change',
+	'blueprint_deploy',
+	'agent_kit_generate',
 ]);
 export type AuditAction = z.infer<typeof AuditAction>;
 
 // Resource types for audit
 export const ResourceType = z.enum([
-  'record', 'table', 'field', 'user', 'role',
-  'workspace', 'blueprint', 'team', 'subscription', 'instruction',
+	'record',
+	'table',
+	'field',
+	'user',
+	'role',
+	'workspace',
+	'blueprint',
+	'team',
+	'subscription',
+	'instruction',
 ]);
 export type ResourceType = z.infer<typeof ResourceType>;
 
 // Agent Kit format
-export const AgentKitFormat = z.enum([
-  'claude-desktop', 'claude-code', 'cursor', 'chatgpt', 'raw',
-]);
+export const AgentKitFormat = z.enum(['claude-desktop', 'claude-code', 'cursor', 'chatgpt', 'raw']);
 export type AgentKitFormat = z.infer<typeof AgentKitFormat>;
 
 // Agent Kit component
 export const AgentKitComponent = z.enum([
-  'system_instructions', 'behavioral_rules', 'skills', 'connection_config',
+	'system_instructions',
+	'behavioral_rules',
+	'skills',
+	'connection_config',
 ]);
 export type AgentKitComponent = z.infer<typeof AgentKitComponent>;
 

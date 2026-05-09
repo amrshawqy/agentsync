@@ -1,4 +1,4 @@
-import type { PaginatedResponse, AuditLog } from '@agentsync/types';
+import type { AuditLog, PaginatedResponse } from '@agentsync/types';
 
 export class AuditResource {
 	constructor(private request: <T>(method: string, path: string, body?: unknown) => Promise<T>) {}

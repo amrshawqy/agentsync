@@ -1,23 +1,17 @@
-import { and, eq, sql } from 'drizzle-orm';
 import type { Database } from '@agentsync/db';
-import { accounts, users, teams, roles } from '@agentsync/db';
+import { accounts, roles, teams, users } from '@agentsync/db';
+import { and, eq, sql } from 'drizzle-orm';
 
 export class AccountService {
 	constructor(private db: Database) {}
 
 	async create() {
-		const [account] = await this.db
-			.insert(accounts)
-			.values({})
-			.returning();
+		const [account] = await this.db.insert(accounts).values({}).returning();
 		return account;
 	}
 
 	async getById(accountId: string) {
-		const [account] = await this.db
-			.select()
-			.from(accounts)
-			.where(eq(accounts.id, accountId));
+		const [account] = await this.db.select().from(accounts).where(eq(accounts.id, accountId));
 		return account ?? null;
 	}
 
@@ -64,20 +58,58 @@ export class AccountService {
 		const [result] = await this.db
 			.select({ count: sql<number>`count(*)` })
 			.from(users)
-			.where(
-				and(
-					eq(users.accountId, accountId),
-					eq(users.status, 'active'),
-				),
-			);
+			.where(and(eq(users.accountId, accountId), eq(users.status, 'active')));
 		return Number(result?.count ?? 0);
 	}
 
+	async findOrCreateByEmail(email: string, opts: { markVerified?: boolean } = {}) {
+		const normalized = email.toLowerCase();
+		const existing = await this.getByPrimaryEmail(normalized);
+		if (existing) {
+			if (opts.markVerified && !existing.emailVerifiedAt) {
+				const [updated] = await this.db
+					.update(accounts)
+					.set({
+						emailVerifiedAt: new Date(),
+						limitsTier: 'verified',
+						updatedAt: new Date(),
+					})
+					.where(eq(accounts.id, existing.id))
+					.returning();
+				return updated;
+			}
+			return existing;
+		}
+		const [account] = await this.db
+			.insert(accounts)
+			.values({
+				primaryEmail: normalized,
+				emailVerifiedAt: opts.markVerified ? new Date() : undefined,
+				limitsTier: opts.markVerified ? 'verified' : 'unverified',
+			})
+			.returning();
+		return account;
+	}
+
+	async setSuperAdmin(accountId: string, isSuperAdmin: boolean) {
+		const [account] = await this.db
+			.update(accounts)
+			.set({ isSuperAdmin, updatedAt: new Date() })
+			.where(eq(accounts.id, accountId))
+			.returning();
+		return account ?? null;
+	}
+
+	async hasAnySuperAdmin(): Promise<boolean> {
+		const [row] = await this.db
+			.select({ count: sql<number>`count(*)` })
+			.from(accounts)
+			.where(eq(accounts.isSuperAdmin, true));
+		return Number(row?.count ?? 0) > 0;
+	}
+
 	async ensureAccountForMembership(userId: string): Promise<string | null> {
-		const [membership] = await this.db
-			.select()
-			.from(users)
-			.where(eq(users.id, userId));
+		const [membership] = await this.db.select().from(users).where(eq(users.id, userId));
 		if (!membership) return null;
 		if (membership.accountId) return membership.accountId;
 
@@ -86,10 +118,7 @@ export class AccountService {
 			.values({ primaryEmail: membership.email.toLowerCase() })
 			.returning();
 
-		await this.db
-			.update(users)
-			.set({ accountId: account.id })
-			.where(eq(users.id, userId));
+		await this.db.update(users).set({ accountId: account.id }).where(eq(users.id, userId));
 
 		return account.id;
 	}

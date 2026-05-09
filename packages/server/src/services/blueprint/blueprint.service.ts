@@ -1,11 +1,11 @@
-import { eq, and, sql } from 'drizzle-orm';
 import type { Database } from '@agentsync/db';
-import { blueprints, workspaces, schemaTables, schemaFields, records } from '@agentsync/db';
-import type { CreateBlueprint, BlueprintSchemaDefinition } from '@agentsync/types';
-import { validateBlueprintSchema } from './validator.js';
-import type { SchemaService } from '../schema/schema.service.js';
-import type { ConstraintService } from '../schema/constraint.service.js';
+import { blueprints, records, schemaFields, schemaTables, workspaces } from '@agentsync/db';
+import type { BlueprintSchemaDefinition, CreateBlueprint } from '@agentsync/types';
+import { and, eq, sql } from 'drizzle-orm';
 import type { ProvenanceService } from '../data/provenance.service.js';
+import type { ConstraintService } from '../schema/constraint.service.js';
+import type { SchemaService } from '../schema/schema.service.js';
+import { validateBlueprintSchema } from './validator.js';
 
 export class BlueprintService {
 	constructor(
@@ -51,7 +51,7 @@ export class BlueprintService {
 			.where(and(...conditions))
 			.orderBy(blueprints.version);
 
-		return version ? results[0] ?? null : results[results.length - 1] ?? null;
+		return version ? (results[0] ?? null) : (results[results.length - 1] ?? null);
 	}
 
 	async getById(id: string) {
@@ -60,17 +60,11 @@ export class BlueprintService {
 	}
 
 	async listBuiltin() {
-		return this.db
-			.select()
-			.from(blueprints)
-			.where(eq(blueprints.isBuiltin, true));
+		return this.db.select().from(blueprints).where(eq(blueprints.isBuiltin, true));
 	}
 
 	async listPublished() {
-		return this.db
-			.select()
-			.from(blueprints)
-			.where(eq(blueprints.isPublished, true));
+		return this.db.select().from(blueprints).where(eq(blueprints.isPublished, true));
 	}
 
 	async publish(slug: string) {
@@ -155,34 +149,43 @@ export class BlueprintService {
 			// Create tables and fields
 			const tableMap = new Map<string, string>(); // tableDef.slug → table.id
 			for (const tableDef of schema.tables) {
-				const table = await this.schemaService.createTable(teamId, {
-					name: tableDef.name,
-					slug: tableDef.slug,
-					workspaceId: workspace.id,
-					description: tableDef.description,
-					agentHint: tableDef.agentHint,
-					sourceLayer: 'blueprint',
-				}, tx);
+				const table = await this.schemaService.createTable(
+					teamId,
+					{
+						name: tableDef.name,
+						slug: tableDef.slug,
+						workspaceId: workspace.id,
+						description: tableDef.description,
+						agentHint: tableDef.agentHint,
+						sourceLayer: 'blueprint',
+					},
+					tx,
+				);
 
 				tableMap.set(tableDef.slug, table.id);
 
 				for (let i = 0; i < tableDef.fields.length; i++) {
 					const fieldDef = tableDef.fields[i];
-					await this.schemaService.createField(teamId, table.id, {
-						name: fieldDef.name ?? fieldDef.slug,
-						slug: fieldDef.slug,
-						fieldType: fieldDef.fieldType as any,
-						isRequired: fieldDef.isRequired,
-						isIndexed: fieldDef.isIndexed,
-						validation: fieldDef.validation as any,
-						options: fieldDef.options as any,
-						constraints: fieldDef.constraints as any,
-						relationConfig: fieldDef.relationConfig as any,
-						rollupConfig: (fieldDef as any).rollupConfig,
-						agentHint: fieldDef.agentHint,
-						sourceLayer: 'blueprint',
-						fieldOrder: i,
-					}, tx);
+					await this.schemaService.createField(
+						teamId,
+						table.id,
+						{
+							name: fieldDef.name ?? fieldDef.slug,
+							slug: fieldDef.slug,
+							fieldType: fieldDef.fieldType as any,
+							isRequired: fieldDef.isRequired,
+							isIndexed: fieldDef.isIndexed,
+							validation: fieldDef.validation as any,
+							options: fieldDef.options as any,
+							constraints: fieldDef.constraints as any,
+							relationConfig: fieldDef.relationConfig as any,
+							rollupConfig: (fieldDef as any).rollupConfig,
+							agentHint: fieldDef.agentHint,
+							sourceLayer: 'blueprint',
+							fieldOrder: i,
+						},
+						tx,
+					);
 				}
 			}
 
@@ -190,7 +193,11 @@ export class BlueprintService {
 			if (opts?.includeSeedData && bp.seedData) {
 				// Pass 1: Insert all seed records, collect @ref map
 				const refMap = new Map<string, string>(); // "@ref:tableSlug:index" → actual UUID
-				const insertedRecords: Array<{ id: string; tableId: string; data: Record<string, unknown> }> = [];
+				const insertedRecords: Array<{
+					id: string;
+					tableId: string;
+					data: Record<string, unknown>;
+				}> = [];
 
 				for (const tableDef of schema.tables) {
 					const tableId = tableMap.get(tableDef.slug);
@@ -205,18 +212,23 @@ export class BlueprintService {
 						// Validate constraints
 						const violations = await this.constraintService.validate(tableId, data);
 						if (violations.length > 0) {
-							throw new Error(`Seed data validation failed for ${tableDef.slug}[${idx}]: ${violations.map((v) => v.message).join('; ')}`);
+							throw new Error(
+								`Seed data validation failed for ${tableDef.slug}[${idx}]: ${violations.map((v) => v.message).join('; ')}`,
+							);
 						}
 
 						// Build provenance via ProvenanceService
 						const provenance = this.provenanceService.buildProvenance(data, 'blueprint-seed', 0.8);
 
-						const [rec] = await tx.insert(records).values({
-							teamId,
-							tableId,
-							data,
-							provenance,
-						}).returning();
+						const [rec] = await tx
+							.insert(records)
+							.values({
+								teamId,
+								tableId,
+								data,
+								provenance,
+							})
+							.returning();
 
 						refMap.set(`@ref:${tableDef.slug}:${idx}`, rec.id);
 						insertedRecords.push({ id: rec.id, tableId, data });
@@ -241,9 +253,7 @@ export class BlueprintService {
 						}
 					}
 					if (hasRef) {
-						await tx.update(records)
-							.set({ data: resolvedData })
-							.where(eq(records.id, rec.id));
+						await tx.update(records).set({ data: resolvedData }).where(eq(records.id, rec.id));
 					}
 				}
 			}

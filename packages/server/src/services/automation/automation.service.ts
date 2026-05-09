@@ -1,17 +1,21 @@
-import { eq, and } from 'drizzle-orm';
 import type { Database } from '@agentsync/db';
 import { automations } from '@agentsync/db';
+import { and, eq } from 'drizzle-orm';
 
 export class AutomationService {
 	constructor(private db: Database) {}
 
-	async create(teamId: string, userId: string, input: {
-		name: string;
-		workspaceId?: string;
-		description?: string;
-		trigger: Record<string, unknown>;
-		actions: Record<string, unknown>[];
-	}) {
+	async create(
+		teamId: string,
+		userId: string,
+		input: {
+			name: string;
+			workspaceId?: string;
+			description?: string;
+			trigger: Record<string, unknown>;
+			actions: Record<string, unknown>[];
+		},
+	) {
 		const [automation] = await this.db
 			.insert(automations)
 			.values({

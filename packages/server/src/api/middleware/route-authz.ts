@@ -1,6 +1,6 @@
 import type { RequestContext } from '@agentsync/types';
-import type { ServiceContainer } from '../../services/index.js';
 import { hasAdminAccess } from '../../services/auth/admin-access.js';
+import type { ServiceContainer } from '../../services/index.js';
 
 export function getRequestContext(c: any): RequestContext {
 	return {
@@ -14,10 +14,7 @@ export function getRequestContext(c: any): RequestContext {
 	};
 }
 
-export async function requireAdmin(
-	c: any,
-	services: ServiceContainer,
-): Promise<Response | null> {
+export async function requireAdmin(c: any, services: ServiceContainer): Promise<Response | null> {
 	const ctx = getRequestContext(c);
 	const allowed = await hasAdminAccess(services.permission, ctx);
 	if (!allowed) {

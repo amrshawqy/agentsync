@@ -1,6 +1,6 @@
 import type { EventPayload } from '@agentsync/types';
 import { logger } from '../../infra/logger.js';
-import { matchesAnyPattern, type SubscriptionPattern } from './matcher.js';
+import { type SubscriptionPattern, matchesAnyPattern } from './matcher.js';
 
 interface SSEConnection {
 	id: string;

@@ -39,7 +39,7 @@ export function isPrivateIp(ip: string): boolean {
 	if (parts.length !== 4) return false;
 
 	const octets = parts.map(Number);
-	if (octets.some((o) => isNaN(o) || o < 0 || o > 255)) return false;
+	if (octets.some((o) => Number.isNaN(o) || o < 0 || o > 255)) return false;
 
 	const [a, b] = octets;
 
@@ -67,7 +67,7 @@ export function isPrivateIp(ip: string): boolean {
 function matchesCidr(ip: string, cidr: string): boolean {
 	const [cidrIp, prefixStr] = cidr.split('/');
 	const prefix = Number(prefixStr);
-	if (isNaN(prefix)) return false;
+	if (Number.isNaN(prefix)) return false;
 
 	const ipParts = ip.split('.').map(Number);
 	const cidrParts = cidrIp.split('.').map(Number);
@@ -77,7 +77,7 @@ function matchesCidr(ip: string, cidr: string): boolean {
 	const cidrNum = (cidrParts[0] << 24) | (cidrParts[1] << 16) | (cidrParts[2] << 8) | cidrParts[3];
 	const mask = prefix === 0 ? 0 : (~0 << (32 - prefix)) >>> 0;
 
-	return (ipNum >>> 0 & mask) === (cidrNum >>> 0 & mask);
+	return ((ipNum >>> 0) & mask) === ((cidrNum >>> 0) & mask);
 }
 
 export async function validateWebhookUrl(url: string, config: WebhookUrlConfig): Promise<void> {

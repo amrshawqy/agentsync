@@ -18,7 +18,10 @@ export class FormulaEngine {
 	/**
 	 * Evaluate a single formula string against a data context.
 	 */
-	evaluate(formula: string, context: { data: Record<string, unknown>; fields: SchemaField[] }): unknown {
+	evaluate(
+		formula: string,
+		context: { data: Record<string, unknown>; fields: SchemaField[] },
+	): unknown {
 		const resolved = this.resolveFieldRefs(formula, context.data);
 		try {
 			return this.parse(resolved);
@@ -30,10 +33,7 @@ export class FormulaEngine {
 	/**
 	 * Resolve all formula fields in a record's data, returning computed values.
 	 */
-	resolveFormulas(
-		data: Record<string, unknown>,
-		fields: SchemaField[],
-	): Record<string, unknown> {
+	resolveFormulas(data: Record<string, unknown>, fields: SchemaField[]): Record<string, unknown> {
 		const result: Record<string, unknown> = {};
 		const formulaFields = fields.filter((f) => f.fieldType === 'formula');
 
@@ -110,10 +110,18 @@ export class FormulaEngine {
 				this.pos += 2;
 				const right = this.parseAddSub();
 				switch (next2) {
-					case '>=': left = Number(left) >= Number(right); break;
-					case '<=': left = Number(left) <= Number(right); break;
-					case '!=': left = left !== right; break;
-					case '==': left = left === right; break;
+					case '>=':
+						left = Number(left) >= Number(right);
+						break;
+					case '<=':
+						left = Number(left) <= Number(right);
+						break;
+					case '!=':
+						left = left !== right;
+						break;
+					case '==':
+						left = left === right;
+						break;
 				}
 			} else if (this.peek() === '>' || this.peek() === '<') {
 				const op = this.consume();
@@ -172,7 +180,7 @@ export class FormulaEngine {
 	private parseUnary(): unknown {
 		if (this.peek() === '-') {
 			this.consume();
-			return -(Number(this.parsePrimary()));
+			return -Number(this.parsePrimary());
 		}
 		return this.parsePrimary();
 	}
@@ -236,7 +244,7 @@ export class FormulaEngine {
 			numStr += this.input[this.pos];
 			this.pos++;
 		}
-		return parseFloat(numStr);
+		return Number.parseFloat(numStr);
 	}
 
 	private parseFunctionOrIdentifier(): unknown {

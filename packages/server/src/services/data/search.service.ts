@@ -1,6 +1,6 @@
-import { sql, eq, and } from 'drizzle-orm';
 import type { Database } from '@agentsync/db';
-import { records, recordIndexes } from '@agentsync/db';
+import { recordIndexes, records } from '@agentsync/db';
+import { and, eq, sql } from 'drizzle-orm';
 
 export class SearchService {
 	constructor(private db: Database) {}

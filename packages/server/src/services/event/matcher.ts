@@ -1,4 +1,4 @@
-import type { EventPayload, EventPattern } from '@agentsync/types';
+import type { EventPattern, EventPayload } from '@agentsync/types';
 
 export interface SubscriptionPattern extends EventPattern {
 	workspaceId?: string;
@@ -6,10 +6,7 @@ export interface SubscriptionPattern extends EventPattern {
 	fieldSlug?: string;
 }
 
-export function matchesPattern(
-	event: EventPayload,
-	pattern: SubscriptionPattern,
-): boolean {
+export function matchesPattern(event: EventPayload, pattern: SubscriptionPattern): boolean {
 	if (pattern.eventType && pattern.eventType !== event.eventType) return false;
 	if (pattern.workspace && pattern.workspace !== event.workspace) return false;
 	if (pattern.workspaceId && pattern.workspaceId !== event.workspaceId) return false;

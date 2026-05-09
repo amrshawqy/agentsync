@@ -1,11 +1,11 @@
-import { describe, it, expect, beforeAll } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
 import { registerTools } from '../../src/mcp/tools/index.js';
 import {
+	createAuthContextGetter,
 	createMockMcpServer,
 	createMockServiceContainer,
-	createAuthContextGetter,
-	getResultText,
 	getResultJson,
+	getResultText,
 } from './setup.js';
 
 describe('Automation MCP tools', () => {
@@ -136,11 +136,7 @@ describe('Automation MCP tools', () => {
 
 			expect(text).toContain('enabled');
 			expect(text).toContain('My Automation');
-			expect(services.automation.toggle).toHaveBeenCalledWith(
-				automationId,
-				'team-test-1',
-				true,
-			);
+			expect(services.automation.toggle).toHaveBeenCalledWith(automationId, 'team-test-1', true);
 		});
 
 		it('should disable an automation', async () => {
@@ -159,11 +155,7 @@ describe('Automation MCP tools', () => {
 
 			expect(text).toContain('disabled');
 			expect(text).toContain('Another Automation');
-			expect(services.automation.toggle).toHaveBeenCalledWith(
-				automationId,
-				'team-test-1',
-				false,
-			);
+			expect(services.automation.toggle).toHaveBeenCalledWith(automationId, 'team-test-1', false);
 		});
 	});
 });

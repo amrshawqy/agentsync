@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
-import type { ServiceContainer } from '../../services/index.js';
 import { getConfig } from '../../config.js';
+import type { ServiceContainer } from '../../services/index.js';
 
 export function createHealthRoutes(services: ServiceContainer): Hono {
 	const app = new Hono();

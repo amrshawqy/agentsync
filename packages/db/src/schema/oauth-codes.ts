@@ -1,10 +1,12 @@
-import { pgTable, uuid, varchar, text, timestamp } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, uuid, varchar } from 'drizzle-orm/pg-core';
 import { users } from './users.js';
 
 export const oauthCodes = pgTable('oauth_codes', {
 	id: uuid('id').primaryKey().defaultRandom(),
 	code: varchar('code', { length: 255 }).notNull().unique(),
-	userId: uuid('user_id').notNull().references(() => users.id),
+	userId: uuid('user_id')
+		.notNull()
+		.references(() => users.id),
 	clientId: varchar('client_id', { length: 255 }).notNull(),
 	redirectUri: text('redirect_uri').notNull(),
 	scope: text('scope'),

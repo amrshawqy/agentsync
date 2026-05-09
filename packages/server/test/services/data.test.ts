@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { DataService } from '../../src/services/data/data.service.js';
 
 function createMockDeps() {
@@ -16,24 +16,26 @@ function createMockDeps() {
 	};
 
 	const db = {
-		transaction: vi.fn(async (fn: any) => fn({
-			insert: vi.fn().mockReturnValue({
-				values: vi.fn().mockReturnValue({
-					returning: vi.fn().mockResolvedValue([mockRecord]),
-					onConflictDoUpdate: vi.fn().mockReturnThis(),
-				}),
-			}),
-			update: vi.fn().mockReturnValue({
-				set: vi.fn().mockReturnValue({
-					where: vi.fn().mockReturnValue({
+		transaction: vi.fn(async (fn: any) =>
+			fn({
+				insert: vi.fn().mockReturnValue({
+					values: vi.fn().mockReturnValue({
 						returning: vi.fn().mockResolvedValue([mockRecord]),
+						onConflictDoUpdate: vi.fn().mockReturnThis(),
 					}),
 				}),
+				update: vi.fn().mockReturnValue({
+					set: vi.fn().mockReturnValue({
+						where: vi.fn().mockReturnValue({
+							returning: vi.fn().mockResolvedValue([mockRecord]),
+						}),
+					}),
+				}),
+				delete: vi.fn().mockReturnValue({
+					where: vi.fn().mockResolvedValue(undefined),
+				}),
 			}),
-			delete: vi.fn().mockReturnValue({
-				where: vi.fn().mockResolvedValue(undefined),
-			}),
-		})),
+		),
 		select: vi.fn().mockReturnValue({
 			from: vi.fn().mockReturnValue({
 				where: vi.fn().mockResolvedValue([mockRecord]),
@@ -54,8 +56,12 @@ function createMockDeps() {
 	} as any;
 
 	const provenance = {
-		buildProvenance: vi.fn().mockReturnValue({ name: { agent: 'user-1', at: new Date().toISOString(), confidence: 1 } }),
-		mergeProvenance: vi.fn().mockReturnValue({ name: { agent: 'user-1', at: new Date().toISOString(), confidence: 1 } }),
+		buildProvenance: vi
+			.fn()
+			.mockReturnValue({ name: { agent: 'user-1', at: new Date().toISOString(), confidence: 1 } }),
+		mergeProvenance: vi
+			.fn()
+			.mockReturnValue({ name: { agent: 'user-1', at: new Date().toISOString(), confidence: 1 } }),
 		addVerification: vi.fn().mockReturnValue({}),
 	} as any;
 
@@ -79,11 +85,15 @@ function createMockDeps() {
 	} as any;
 
 	const permission = {
-		evaluate: vi.fn().mockResolvedValue({ allowed: true, fieldAccess: { hidden: [], readOnly: [] } }),
+		evaluate: vi
+			.fn()
+			.mockResolvedValue({ allowed: true, fieldAccess: { hidden: [], readOnly: [] } }),
 	} as any;
 
 	const schema = {
-		getTableById: vi.fn().mockResolvedValue({ id: 'table-1', slug: 'contacts', workspaceId: 'ws-1' }),
+		getTableById: vi
+			.fn()
+			.mockResolvedValue({ id: 'table-1', slug: 'contacts', workspaceId: 'ws-1' }),
 		getWorkspaceById: vi.fn().mockResolvedValue({ id: 'ws-1', slug: 'crm' }),
 		getFieldsForTable: vi.fn().mockResolvedValue([]),
 	} as any;
@@ -96,7 +106,19 @@ function createMockDeps() {
 		log: vi.fn().mockResolvedValue(undefined),
 	} as any;
 
-	return { db, provenance, indexService, relation, search, constraint, permission, schema, event, audit, mockRecord };
+	return {
+		db,
+		provenance,
+		indexService,
+		relation,
+		search,
+		constraint,
+		permission,
+		schema,
+		event,
+		audit,
+		mockRecord,
+	};
 }
 
 const ctx = {
@@ -110,9 +132,16 @@ describe('DataService', () => {
 	it('createRecord validates constraints and returns record', async () => {
 		const deps = createMockDeps();
 		const service = new DataService(
-			deps.db, deps.provenance, deps.indexService, deps.relation,
-			deps.search, deps.constraint, deps.permission, deps.schema,
-			deps.event, deps.audit,
+			deps.db,
+			deps.provenance,
+			deps.indexService,
+			deps.relation,
+			deps.search,
+			deps.constraint,
+			deps.permission,
+			deps.schema,
+			deps.event,
+			deps.audit,
 		);
 
 		const result = await service.createRecord(ctx, {
@@ -127,30 +156,48 @@ describe('DataService', () => {
 
 	it('createRecord throws on constraint violations', async () => {
 		const deps = createMockDeps();
-		deps.constraint.validate.mockResolvedValue([{
-			field: 'name',
-			code: 'REQUIRED_FIELD_MISSING',
-			message: 'Field is required',
-		}]);
+		deps.constraint.validate.mockResolvedValue([
+			{
+				field: 'name',
+				code: 'REQUIRED_FIELD_MISSING',
+				message: 'Field is required',
+			},
+		]);
 
 		const service = new DataService(
-			deps.db, deps.provenance, deps.indexService, deps.relation,
-			deps.search, deps.constraint, deps.permission, deps.schema,
-			deps.event, deps.audit,
+			deps.db,
+			deps.provenance,
+			deps.indexService,
+			deps.relation,
+			deps.search,
+			deps.constraint,
+			deps.permission,
+			deps.schema,
+			deps.event,
+			deps.audit,
 		);
 
-		await expect(service.createRecord(ctx, {
-			tableId: 'table-1',
-			data: {},
-		})).rejects.toThrow('Validation failed');
+		await expect(
+			service.createRecord(ctx, {
+				tableId: 'table-1',
+				data: {},
+			}),
+		).rejects.toThrow('Validation failed');
 	});
 
 	it('createRecord emits event and logs audit', async () => {
 		const deps = createMockDeps();
 		const service = new DataService(
-			deps.db, deps.provenance, deps.indexService, deps.relation,
-			deps.search, deps.constraint, deps.permission, deps.schema,
-			deps.event, deps.audit,
+			deps.db,
+			deps.provenance,
+			deps.indexService,
+			deps.relation,
+			deps.search,
+			deps.constraint,
+			deps.permission,
+			deps.schema,
+			deps.event,
+			deps.audit,
 		);
 
 		await service.createRecord(ctx, {
@@ -158,23 +205,32 @@ describe('DataService', () => {
 			data: { name: 'Test' },
 		});
 
-		expect(deps.event.emit).toHaveBeenCalledWith(expect.objectContaining({
-			eventType: 'record.created',
-			teamId: 'team-1',
-			tableId: 'table-1',
-			table: 'contacts',
-			workspaceId: 'ws-1',
-			workspace: 'crm',
-		}));
+		expect(deps.event.emit).toHaveBeenCalledWith(
+			expect.objectContaining({
+				eventType: 'record.created',
+				teamId: 'team-1',
+				tableId: 'table-1',
+				table: 'contacts',
+				workspaceId: 'ws-1',
+				workspace: 'crm',
+			}),
+		);
 		expect(deps.audit.log).toHaveBeenCalled();
 	});
 
 	it('createRecord creates relations when links are provided', async () => {
 		const deps = createMockDeps();
 		const service = new DataService(
-			deps.db, deps.provenance, deps.indexService, deps.relation,
-			deps.search, deps.constraint, deps.permission, deps.schema,
-			deps.event, deps.audit,
+			deps.db,
+			deps.provenance,
+			deps.indexService,
+			deps.relation,
+			deps.search,
+			deps.constraint,
+			deps.permission,
+			deps.schema,
+			deps.event,
+			deps.audit,
 		);
 
 		await service.createRecord(ctx, {
@@ -195,9 +251,16 @@ describe('DataService', () => {
 		});
 
 		const service = new DataService(
-			deps.db, deps.provenance, deps.indexService, deps.relation,
-			deps.search, deps.constraint, deps.permission, deps.schema,
-			deps.event, deps.audit,
+			deps.db,
+			deps.provenance,
+			deps.indexService,
+			deps.relation,
+			deps.search,
+			deps.constraint,
+			deps.permission,
+			deps.schema,
+			deps.event,
+			deps.audit,
 		);
 
 		const result = await service.getRecord(ctx, 'nonexistent');
@@ -211,22 +274,36 @@ describe('DataService', () => {
 		]);
 
 		const service = new DataService(
-			deps.db, deps.provenance, deps.indexService, deps.relation,
-			deps.search, deps.constraint, deps.permission, deps.schema,
-			deps.event, deps.audit,
+			deps.db,
+			deps.provenance,
+			deps.indexService,
+			deps.relation,
+			deps.search,
+			deps.constraint,
+			deps.permission,
+			deps.schema,
+			deps.event,
+			deps.audit,
 		);
 
 		const result = await service.getRecord(ctx, 'rec-1');
 		expect(result).not.toBeNull();
-		expect(result!.relations).toHaveLength(1);
+		expect(result?.relations).toHaveLength(1);
 	});
 
 	it('updateRecord merges data and provenance', async () => {
 		const deps = createMockDeps();
 		const service = new DataService(
-			deps.db, deps.provenance, deps.indexService, deps.relation,
-			deps.search, deps.constraint, deps.permission, deps.schema,
-			deps.event, deps.audit,
+			deps.db,
+			deps.provenance,
+			deps.indexService,
+			deps.relation,
+			deps.search,
+			deps.constraint,
+			deps.permission,
+			deps.schema,
+			deps.event,
+			deps.audit,
 		);
 
 		const result = await service.updateRecord(ctx, 'rec-1', {
@@ -240,27 +317,37 @@ describe('DataService', () => {
 	it('deleteRecord soft deletes and cleans indexes', async () => {
 		const deps = createMockDeps();
 		const service = new DataService(
-			deps.db, deps.provenance, deps.indexService, deps.relation,
-			deps.search, deps.constraint, deps.permission, deps.schema,
-			deps.event, deps.audit,
+			deps.db,
+			deps.provenance,
+			deps.indexService,
+			deps.relation,
+			deps.search,
+			deps.constraint,
+			deps.permission,
+			deps.schema,
+			deps.event,
+			deps.audit,
 		);
 
 		await service.deleteRecord(ctx, 'rec-1');
 
 		expect(deps.indexService.deleteIndexes).toHaveBeenCalledWith('rec-1');
-		expect(deps.event.emit).toHaveBeenCalledWith(expect.objectContaining({
-			eventType: 'record.deleted',
-			tableId: 'table-1',
-			table: 'contacts',
-			workspaceId: 'ws-1',
-			workspace: 'crm',
-		}));
+		expect(deps.event.emit).toHaveBeenCalledWith(
+			expect.objectContaining({
+				eventType: 'record.deleted',
+				tableId: 'table-1',
+				table: 'contacts',
+				workspaceId: 'ws-1',
+				workspace: 'crm',
+			}),
+		);
 	});
 
 	it('queryRecords returns paginated results', async () => {
 		const deps = createMockDeps();
 		// Mock count query
-		const selectMock = vi.fn()
+		const selectMock = vi
+			.fn()
 			.mockReturnValueOnce({
 				from: vi.fn().mockReturnValue({
 					where: vi.fn().mockResolvedValue([{ count: 1 }]),
@@ -280,9 +367,16 @@ describe('DataService', () => {
 		deps.db.select = selectMock;
 
 		const service = new DataService(
-			deps.db, deps.provenance, deps.indexService, deps.relation,
-			deps.search, deps.constraint, deps.permission, deps.schema,
-			deps.event, deps.audit,
+			deps.db,
+			deps.provenance,
+			deps.indexService,
+			deps.relation,
+			deps.search,
+			deps.constraint,
+			deps.permission,
+			deps.schema,
+			deps.event,
+			deps.audit,
 		);
 
 		const result = await service.queryRecords(ctx, {
@@ -299,15 +393,19 @@ describe('DataService', () => {
 	it('bulkImport creates multiple records in transaction', async () => {
 		const deps = createMockDeps();
 		const service = new DataService(
-			deps.db, deps.provenance, deps.indexService, deps.relation,
-			deps.search, deps.constraint, deps.permission, deps.schema,
-			deps.event, deps.audit,
+			deps.db,
+			deps.provenance,
+			deps.indexService,
+			deps.relation,
+			deps.search,
+			deps.constraint,
+			deps.permission,
+			deps.schema,
+			deps.event,
+			deps.audit,
 		);
 
-		const items = [
-			{ name: 'Record 1' },
-			{ name: 'Record 2' },
-		];
+		const items = [{ name: 'Record 1' }, { name: 'Record 2' }];
 
 		const result = await service.bulkImport(ctx, 'table-1', items);
 		expect(result).toHaveLength(2);
@@ -317,9 +415,16 @@ describe('DataService', () => {
 	it('verifyField updates provenance with verification', async () => {
 		const deps = createMockDeps();
 		const service = new DataService(
-			deps.db, deps.provenance, deps.indexService, deps.relation,
-			deps.search, deps.constraint, deps.permission, deps.schema,
-			deps.event, deps.audit,
+			deps.db,
+			deps.provenance,
+			deps.indexService,
+			deps.relation,
+			deps.search,
+			deps.constraint,
+			deps.permission,
+			deps.schema,
+			deps.event,
+			deps.audit,
 		);
 
 		await service.verifyField(ctx, 'rec-1', 'email', 'dns-check', 'valid');
@@ -329,12 +434,14 @@ describe('DataService', () => {
 			'email',
 			expect.objectContaining({ method: 'dns-check', outcome: 'valid' }),
 		);
-		expect(deps.event.emit).toHaveBeenCalledWith(expect.objectContaining({
-			eventType: 'field.changed',
-			tableId: 'table-1',
-			table: 'contacts',
-			workspaceId: 'ws-1',
-			workspace: 'crm',
-		}));
+		expect(deps.event.emit).toHaveBeenCalledWith(
+			expect.objectContaining({
+				eventType: 'field.changed',
+				tableId: 'table-1',
+				table: 'contacts',
+				workspaceId: 'ws-1',
+				workspace: 'crm',
+			}),
+		);
 	});
 });

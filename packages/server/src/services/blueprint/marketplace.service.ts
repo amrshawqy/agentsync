@@ -1,16 +1,12 @@
-import { eq, and, sql, ilike } from 'drizzle-orm';
 import type { Database } from '@agentsync/db';
 import { blueprintReviews, blueprints } from '@agentsync/db';
 import type { CreateBlueprintReview } from '@agentsync/types';
+import { and, eq, ilike, sql } from 'drizzle-orm';
 
 export class MarketplaceService {
 	constructor(private db: Database) {}
 
-	async submitReview(
-		teamId: string,
-		userId: string,
-		input: CreateBlueprintReview,
-	) {
+	async submitReview(teamId: string, userId: string, input: CreateBlueprintReview) {
 		const [review] = await this.db
 			.insert(blueprintReviews)
 			.values({
@@ -39,7 +35,7 @@ export class MarketplaceService {
 		return review;
 	}
 
-	async listReviews(blueprintId: string, limit: number = 20, offset: number = 0) {
+	async listReviews(blueprintId: string, limit = 20, offset = 0) {
 		const results = await this.db
 			.select()
 			.from(blueprintReviews)
@@ -65,8 +61,8 @@ export class MarketplaceService {
 		query?: string,
 		category?: string,
 		tags?: string[],
-		limit: number = 20,
-		offset: number = 0,
+		limit = 20,
+		offset = 0,
 	) {
 		const conditions = [eq(blueprints.isPublished, true)];
 

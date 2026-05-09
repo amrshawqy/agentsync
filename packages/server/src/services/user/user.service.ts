@@ -1,7 +1,7 @@
-import { eq, and } from 'drizzle-orm';
 import type { Database } from '@agentsync/db';
-import { users, roles } from '@agentsync/db';
+import { roles, users } from '@agentsync/db';
 import type { CreateUser, UpdateUser } from '@agentsync/types';
+import { and, eq } from 'drizzle-orm';
 
 export class UserService {
 	constructor(private db: Database) {}
@@ -68,10 +68,7 @@ export class UserService {
 	}
 
 	async updateLastConnected(userId: string): Promise<void> {
-		await this.db
-			.update(users)
-			.set({ lastConnectedAt: new Date() })
-			.where(eq(users.id, userId));
+		await this.db.update(users).set({ lastConnectedAt: new Date() }).where(eq(users.id, userId));
 	}
 
 	async getRolesForTeam(teamId: string) {

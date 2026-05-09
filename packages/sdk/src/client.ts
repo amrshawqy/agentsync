@@ -1,18 +1,18 @@
 import type { ApiResponse, HealthResponse } from '@agentsync/types';
-import { OAuthHelper, type OAuthConfig, type TokenSet } from './auth.js';
-import { RecordResource } from './resources/records.js';
-import { SchemaResource } from './resources/schema.js';
-import { BlueprintResource } from './resources/blueprints.js';
-import { MemberResource } from './resources/members.js';
-import { EventResource } from './resources/events.js';
+import { type OAuthConfig, OAuthHelper, type TokenSet } from './auth.js';
+import { SSEConsumer } from './events/index.js';
 import { AuditResource } from './resources/audit.js';
-import { SuggestionResource } from './resources/suggestions.js';
 import { AutomationResource } from './resources/automations.js';
+import { BlueprintResource } from './resources/blueprints.js';
+import { EventResource } from './resources/events.js';
 import { InstructionResource } from './resources/instructions.js';
 import { MarketplaceResource } from './resources/marketplace.js';
-import { WorkspaceResource } from './resources/workspaces.js';
+import { MemberResource } from './resources/members.js';
+import { RecordResource } from './resources/records.js';
+import { SchemaResource } from './resources/schema.js';
+import { SuggestionResource } from './resources/suggestions.js';
 import { UploadResource } from './resources/uploads.js';
-import { SSEConsumer } from './events/index.js';
+import { WorkspaceResource } from './resources/workspaces.js';
 
 export interface AgentSyncClientConfig {
 	serverUrl: string;
@@ -110,18 +110,18 @@ export class AgentSyncClient {
 		return this.request<ApiResponse<string>>('GET', '/v1/instructions/assembled');
 	}
 
-	async getAgentKit(format: string = 'claude-code'): Promise<ApiResponse<Record<string, unknown>>> {
-		return this.request<ApiResponse<Record<string, unknown>>>('GET', `/v1/agent-kit?format=${format}`);
+	async getAgentKit(format = 'claude-code'): Promise<ApiResponse<Record<string, unknown>>> {
+		return this.request<ApiResponse<Record<string, unknown>>>(
+			'GET',
+			`/v1/agent-kit?format=${format}`,
+		);
 	}
 
 	createEventStream(): SSEConsumer {
-		return new SSEConsumer(
-			`${this.serverUrl}/v1/events/stream`,
-			async () => {
-				const header = await this.getAuthHeader();
-				return header.startsWith('Bearer ') ? header.slice(7) : header;
-			},
-		);
+		return new SSEConsumer(`${this.serverUrl}/v1/events/stream`, async () => {
+			const header = await this.getAuthHeader();
+			return header.startsWith('Bearer ') ? header.slice(7) : header;
+		});
 	}
 
 	setAccessToken(token: string): void {

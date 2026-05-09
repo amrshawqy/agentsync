@@ -1,6 +1,6 @@
-import { vi } from 'vitest';
 import type { RequestContext } from '@agentsync/types';
 import type { PermissionEvaluation } from '@agentsync/types';
+import { vi } from 'vitest';
 
 // ── Mock DB ──
 
@@ -52,9 +52,18 @@ export function createMockDb() {
 		})),
 		transaction: vi.fn(async (fn: any) => fn(db)),
 		_mock: {
-			setInsertResult: (rows: any[]) => { insertRows.length = 0; insertRows.push(...rows); },
-			setSelectResult: (rows: any[]) => { selectRows.length = 0; selectRows.push(...rows); },
-			setUpdateResult: (rows: any[]) => { updateRows = rows; updateReturningFn.mockReturnValue(rows); },
+			setInsertResult: (rows: any[]) => {
+				insertRows.length = 0;
+				insertRows.push(...rows);
+			},
+			setSelectResult: (rows: any[]) => {
+				selectRows.length = 0;
+				selectRows.push(...rows);
+			},
+			setUpdateResult: (rows: any[]) => {
+				updateRows = rows;
+				updateReturningFn.mockReturnValue(rows);
+			},
 		},
 	};
 
@@ -106,7 +115,9 @@ export function createMockConstraintService() {
 export function createMockEventService() {
 	const emittedEvents: any[] = [];
 	return {
-		emit: vi.fn(async (event: any) => { emittedEvents.push(event); }),
+		emit: vi.fn(async (event: any) => {
+			emittedEvents.push(event);
+		}),
 		subscribe: vi.fn(),
 		replay: vi.fn(),
 		_emittedEvents: emittedEvents,

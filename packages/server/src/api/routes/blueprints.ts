@@ -9,8 +9,36 @@ export function createBlueprintRoutes(services: ServiceContainer): Hono {
 	app.use('/*', authMiddleware);
 
 	app.get('/', async (c) => {
-		const blueprints = await services.blueprint.listPublished();
-		return c.json({ success: true, data: blueprints });
+		const builtin = await services.blueprint.listBuiltin();
+		const published = await services.blueprint.listPublished();
+		const all = [...builtin, ...published];
+		const unique = Array.from(new Map(all.map((b) => [b.id, b])).values());
+		return c.json({ success: true, data: unique });
+	});
+
+	app.post('/draft-from-description', async (c) => {
+		const denied = await requireAdmin(c, services);
+		if (denied) return denied;
+
+		if (!services.blueprintDraft.isConfigured) {
+			return c.json(
+				{
+					error: {
+						code: 'BLUEPRINT_DRAFT_DISABLED',
+						message: 'ANTHROPIC_API_KEY is not set on this server',
+					},
+				},
+				404,
+			);
+		}
+		const body = await c.req.json().catch(() => ({}));
+		const description = String(body.description ?? '').trim();
+		try {
+			const draft = await services.blueprintDraft.draftFromDescription(description);
+			return c.json({ success: true, data: draft });
+		} catch (err) {
+			return c.json({ error: { code: 'BLUEPRINT_DRAFT_FAILED', message: String(err) } }, 400);
+		}
 	});
 
 	app.get('/builtin', async (c) => {

@@ -1,11 +1,11 @@
-import { describe, it, expect, beforeAll } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
 import { registerTools } from '../../src/mcp/tools/index.js';
 import {
+	createAuthContextGetter,
 	createMockMcpServer,
 	createMockServiceContainer,
-	createAuthContextGetter,
-	getResultText,
 	getResultJson,
+	getResultText,
 } from './setup.js';
 
 describe('Audit & Monitoring MCP tools', () => {
@@ -22,9 +22,7 @@ describe('Audit & Monitoring MCP tools', () => {
 	describe('query_audit_log', () => {
 		it('should return audit log entries', async () => {
 			services.audit.query.mockResolvedValueOnce({
-				data: [
-					{ id: 'log-1', action: 'create', resourceType: 'record', resourceId: 'rec-1' },
-				],
+				data: [{ id: 'log-1', action: 'create', resourceType: 'record', resourceId: 'rec-1' }],
 				total: 1,
 				limit: 20,
 				offset: 0,

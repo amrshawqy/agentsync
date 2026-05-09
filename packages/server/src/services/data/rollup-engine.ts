@@ -1,7 +1,7 @@
-import { eq, and, sql } from 'drizzle-orm';
 import type { Database } from '@agentsync/db';
 import { records } from '@agentsync/db';
 import type { SchemaField } from '@agentsync/types';
+import { and, eq, sql } from 'drizzle-orm';
 import type { RelationService } from './relation.service.js';
 
 interface RollupConfig {
@@ -30,9 +30,7 @@ export class RollupEngine {
 		fields: SchemaField[],
 	): Promise<Record<string, unknown>> {
 		const result: Record<string, unknown> = {};
-		const rollupFields = fields.filter(
-			(f) => f.fieldType === 'rollup' && (f as any).rollupConfig,
-		);
+		const rollupFields = fields.filter((f) => f.fieldType === 'rollup' && (f as any).rollupConfig);
 
 		if (rollupFields.length === 0) return result;
 
@@ -44,9 +42,7 @@ export class RollupEngine {
 			if (!config) continue;
 
 			// Filter relations by the source relation type
-			const matchingRelations = relations.filter(
-				(r) => r.relationType === config.sourceRelation,
-			);
+			const matchingRelations = relations.filter((r) => r.relationType === config.sourceRelation);
 
 			if (matchingRelations.length === 0) {
 				result[field.slug] = config.aggregation === 'count' ? 0 : null;
@@ -91,24 +87,24 @@ export class RollupEngine {
 				return values.length;
 
 			case 'sum': {
-				const nums = values.map(Number).filter((n) => !isNaN(n));
+				const nums = values.map(Number).filter((n) => !Number.isNaN(n));
 				return nums.reduce((a, b) => a + b, 0);
 			}
 
 			case 'avg': {
-				const nums = values.map(Number).filter((n) => !isNaN(n));
+				const nums = values.map(Number).filter((n) => !Number.isNaN(n));
 				if (nums.length === 0) return null;
 				return nums.reduce((a, b) => a + b, 0) / nums.length;
 			}
 
 			case 'min': {
-				const nums = values.map(Number).filter((n) => !isNaN(n));
+				const nums = values.map(Number).filter((n) => !Number.isNaN(n));
 				if (nums.length === 0) return null;
 				return Math.min(...nums);
 			}
 
 			case 'max': {
-				const nums = values.map(Number).filter((n) => !isNaN(n));
+				const nums = values.map(Number).filter((n) => !Number.isNaN(n));
 				if (nums.length === 0) return null;
 				return Math.max(...nums);
 			}

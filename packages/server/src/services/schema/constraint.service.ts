@@ -19,7 +19,9 @@ export class ConstraintService {
 		data: Record<string, unknown>,
 		existingData?: Record<string, unknown>,
 	): Promise<ConstraintViolation[]> {
-		const fields = (await this.schemaService.getFieldsForTable(tableId)) as unknown as SchemaField[];
+		const fields = (await this.schemaService.getFieldsForTable(
+			tableId,
+		)) as unknown as SchemaField[];
 		const violations: ConstraintViolation[] = [];
 
 		for (const field of fields) {
@@ -82,10 +84,7 @@ export class ConstraintService {
 			}
 
 			// Select/multi-select option validation
-			if (
-				(field.fieldType === 'select' || field.fieldType === 'multi_select') &&
-				field.options
-			) {
+			if ((field.fieldType === 'select' || field.fieldType === 'multi_select') && field.options) {
 				const options = field.options as Array<Record<string, unknown>>;
 				const validValues = options.map((o) => o.value ?? o.label);
 
@@ -166,7 +165,7 @@ export class ConstraintService {
 			case 'datetime':
 				if (typeof value === 'string') {
 					const d = new Date(value);
-					if (isNaN(d.getTime())) {
+					if (Number.isNaN(d.getTime())) {
 						return {
 							field: field.slug,
 							code: 'INVALID_FIELD_TYPE',
@@ -185,7 +184,10 @@ export class ConstraintService {
 				}
 				break;
 			case 'user':
-				if (typeof value !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value)) {
+				if (
+					typeof value !== 'string' ||
+					!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value)
+				) {
 					return {
 						field: field.slug,
 						code: 'INVALID_FIELD_TYPE',

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { AgentKitFormat, AgentKitComponent } from '../enums.js';
+import { AgentKitComponent, AgentKitFormat } from '../enums.js';
 
 export const AgentKitTemplateSchema = z.object({
 	id: z.string().uuid(),

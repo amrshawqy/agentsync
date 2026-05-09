@@ -1,5 +1,5 @@
-import type Redis from 'ioredis';
 import type { EventPayload } from '@agentsync/types';
+import type Redis from 'ioredis';
 import { logger } from '../../infra/logger.js';
 
 const STREAM_KEY = 'agentsync:events';
@@ -28,10 +28,7 @@ export class EventDispatcher {
 		return id ?? '';
 	}
 
-	async readEvents(
-		lastId: string = '0',
-		count: number = 100,
-	): Promise<Array<{ id: string; event: EventPayload }>> {
+	async readEvents(lastId = '0', count = 100): Promise<Array<{ id: string; event: EventPayload }>> {
 		const results = await this.redis.xrange(STREAM_KEY, lastId, '+', 'COUNT', count);
 
 		return results.map(([id, fields]) => {
@@ -47,7 +44,7 @@ export class EventDispatcher {
 	async readNewEvents(
 		consumerGroup: string,
 		consumer: string,
-		count: number = 10,
+		count = 10,
 	): Promise<Array<{ id: string; event: EventPayload }>> {
 		try {
 			await this.redis.xgroup('CREATE', STREAM_KEY, consumerGroup, '$', 'MKSTREAM');

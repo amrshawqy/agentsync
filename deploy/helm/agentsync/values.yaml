@@ -1,0 +1,96 @@
+image:
+  server:
+    repository: ghcr.io/agentsync/server
+    tag: latest
+    pullPolicy: IfNotPresent
+  web:
+    repository: ghcr.io/agentsync/web
+    tag: latest
+    pullPolicy: IfNotPresent
+
+publicBaseUrl: https://agentsync.example.com
+webBaseUrl: ""
+
+ingress:
+  enabled: true
+  className: nginx
+  host: agentsync.example.com
+  tls:
+    enabled: true
+    secretName: agentsync-tls
+
+server:
+  replicas: 2
+  resources:
+    requests:
+      cpu: 200m
+      memory: 256Mi
+    limits:
+      cpu: 1000m
+      memory: 768Mi
+
+web:
+  replicas: 2
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 384Mi
+
+# Inline a Postgres StatefulSet for evaluation. Disable and supply DATABASE_URL
+# via `secrets.databaseUrl` for a managed DB in production.
+postgres:
+  enabled: true
+  image: postgres:16-alpine
+  storageSize: 20Gi
+  storageClass: ""
+  resources:
+    requests:
+      cpu: 200m
+      memory: 256Mi
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+
+redis:
+  enabled: true
+  image: redis:7-alpine
+  storageSize: 1Gi
+  storageClass: ""
+
+# Provide via `--set-string secrets.jwtSecret=...` or sealed-secrets.
+secrets:
+  jwtSecret: ""
+  databaseUrl: ""
+  redisUrl: ""
+
+env:
+  # Email
+  EMAIL_PROVIDER: console
+  EMAIL_FROM: ""
+  RESEND_API_KEY: ""
+  SMTP_HOST: ""
+  SMTP_PORT: "587"
+  SMTP_SECURE: "false"
+  SMTP_USER: ""
+  SMTP_PASSWORD: ""
+  SES_REGION: us-east-1
+  SES_ACCESS_KEY_ID: ""
+  SES_SECRET_ACCESS_KEY: ""
+
+  # OIDC
+  OIDC_ISSUER: ""
+  OIDC_CLIENT_ID: ""
+  OIDC_CLIENT_SECRET: ""
+
+  # Bootstrap & access
+  BOOTSTRAP_ADMIN_EMAIL: ""
+  SIGNUP_ALLOWED_DOMAINS: ""
+
+  # LLM (optional)
+  ANTHROPIC_API_KEY: ""
+
+  # Logging
+  LOG_LEVEL: info

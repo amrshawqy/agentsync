@@ -1,0 +1,12 @@
+apiVersion: v2
+name: agentsync
+description: Self-hostable Helm chart for the AgentSync server and web UI.
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+keywords:
+  - agentsync
+  - mcp
+  - agents
+maintainers:
+  - name: AgentSync

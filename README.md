@@ -1,8 +1,39 @@
 # AgentSync
 
-Shared operational data layer for AI agents.
+[![CI](https://github.com/amrshawqy/agentsync/actions/workflows/ci.yml/badge.svg)](https://github.com/amrshawqy/agentsync/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
+[![Status: alpha](https://img.shields.io/badge/status-alpha-orange.svg)](./CHANGELOG.md)
 
-AgentSync is a TypeScript platform that gives teams one secure system for agent-driven work across CRM, PM, HR, support, and custom domains. It exposes both MCP and REST interfaces, with schema-driven data, role-based permissions, event subscriptions, provenance tracking, and agent-first onboarding.
+**One self-hosted data layer your AI agents share.** Drop in any MCP-capable agent (Claude Desktop, Cursor, Cline, Continue, OpenClaw…), point it at your AgentSync URL, and it can read and write structured business data — contacts, deals, tickets, anything you model — under role-based permissions, with full audit and provenance.
+
+> 🚧 **Alpha software.** APIs and schemas may change between 0.x releases. Track [CHANGELOG.md](./CHANGELOG.md). Not yet recommended for unattended production use.
+
+## What you get
+
+- **One MCP URL** — paste it into any agent. The agent triggers the standard OAuth flow on first use; users see a familiar browser sign-in.
+- **Schema-first data model** — tables, fields with types and constraints, state-machine transitions, and field-level provenance (`who`, `when`, `confidence`).
+- **Multi-tenant, multi-workspace** — Postgres RLS keyed per team; one server hosts many teams.
+- **Built-in blueprints** — CRM, HR, PM, support, finance, inventory; one-click deploy. Or describe your business in plain English and have AgentSync draft a custom blueprint.
+- **Web UI for non-technical users** — table view with inline edit, undo, provenance sidebar, schema browser, blueprint gallery, member invites.
+- **Operator kit** — Docker Compose, Helm chart, OIDC SSO, pluggable email (Resend/SMTP/SES), domain allowlist, super-admin console.
+
+## Quick start (local dev)
+
+```bash
+git clone https://github.com/amrshawqy/agentsync.git
+cd agentsync
+pnpm install
+docker compose -f docker/docker-compose.yml up -d
+pnpm db:migrate
+pnpm build
+pnpm --filter @agentsync/server dev
+# in another terminal:
+pnpm --filter @agentsync/web dev
+```
+
+Then open [http://localhost:3001](http://localhost:3001), sign in, and copy the MCP URL from `/connect` into your AI agent.
+
+For self-hosting in production, see **[docs/deploy/DEPLOY.md](./docs/deploy/DEPLOY.md)**.
 
 ## Why AgentSync
 
@@ -369,6 +400,14 @@ pnpm test && pnpm build
 - [Product Spec](./docs/03-product-spec.md)
 - [Technical Architecture](./docs/04-technical-architecture.md)
 
+
+### Self-host
+
+- [Deploy](./docs/deploy/DEPLOY.md) — Docker Compose and Helm
+- [Environment variables](./docs/deploy/ENV.md)
+- [Backup & restore](./docs/deploy/BACKUP.md)
+- [Upgrade](./docs/deploy/UPGRADE.md)
+- [Security](./SECURITY.md)
 
 ## License
 

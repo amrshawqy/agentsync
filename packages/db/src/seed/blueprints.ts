@@ -1,13 +1,20 @@
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { createDb } from '../client.js';
 import { blueprints } from '../schema/index.js';
-import { readFileSync } from 'node:fs';
-import { join, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const blueprintsDir = join(__dirname, '..', '..', '..', '..', 'blueprints');
 
-const BLUEPRINT_FILES = ['crm.json', 'pm.json', 'hr.json', 'support.json', 'inventory.json', 'finance.json'];
+const BLUEPRINT_FILES = [
+	'crm.json',
+	'pm.json',
+	'hr.json',
+	'support.json',
+	'inventory.json',
+	'finance.json',
+];
 
 export async function seedBlueprints() {
 	console.log('Seeding built-in blueprints...');

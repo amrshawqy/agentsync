@@ -1,0 +1,64 @@
+{{- if .Values.ingress.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "agentsync.fullname" . }}
+  labels: {{- include "agentsync.labels" . | nindent 4 }}
+  {{- with .Values.ingress.annotations }}
+  annotations: {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  ingressClassName: {{ .Values.ingress.className }}
+  {{- if .Values.ingress.tls.enabled }}
+  tls:
+    - hosts:
+        - {{ .Values.ingress.host }}
+      secretName: {{ .Values.ingress.tls.secretName }}
+  {{- end }}
+  rules:
+    - host: {{ .Values.ingress.host }}
+      http:
+        paths:
+          - path: /v1
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "agentsync.fullname" . }}-server
+                port:
+                  number: 3000
+          - path: /oauth
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "agentsync.fullname" . }}-server
+                port:
+                  number: 3000
+          - path: /mcp
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "agentsync.fullname" . }}-server
+                port:
+                  number: 3000
+          - path: /.well-known
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "agentsync.fullname" . }}-server
+                port:
+                  number: 3000
+          - path: /health
+            pathType: Exact
+            backend:
+              service:
+                name: {{ include "agentsync.fullname" . }}-server
+                port:
+                  number: 3000
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "agentsync.fullname" . }}-web
+                port:
+                  number: 3001
+{{- end }}

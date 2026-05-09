@@ -1,11 +1,11 @@
-import { eq, and } from 'drizzle-orm';
-import type { Database } from '@agentsync/db';
-import { users, oauthClients, oauthCodes, refreshTokens, accounts } from '@agentsync/db';
-import { signJwt, verifyJwt, type JwtPayload } from './jwt.js';
-import type { CacheService } from '../cache/cache.service.js';
-import { logger } from '../../infra/logger.js';
 import crypto from 'node:crypto';
+import type { Database } from '@agentsync/db';
+import { accounts, oauthClients, oauthCodes, refreshTokens, users } from '@agentsync/db';
+import { and, eq } from 'drizzle-orm';
 import { getConfig } from '../../config.js';
+import { logger } from '../../infra/logger.js';
+import type { CacheService } from '../cache/cache.service.js';
+import { type JwtPayload, signJwt, verifyJwt } from './jwt.js';
 
 export class AuthService {
 	constructor(
@@ -43,6 +43,7 @@ export class AuthService {
 		redirectUri: string;
 		clientId: string;
 		codeVerifier: string;
+		clientSecret?: string;
 	}): Promise<{ accessToken: string; refreshToken: string; expiresIn: number }> {
 		const [authCode] = await this.db
 			.select()
@@ -52,6 +53,16 @@ export class AuthService {
 		if (!authCode) throw new Error('Invalid authorization code');
 		if (authCode.redirectUri !== params.redirectUri) throw new Error('Redirect URI mismatch');
 		if (new Date() > authCode.expiresAt) throw new Error('Authorization code expired');
+
+		// Confidential clients must present their client_secret on the token endpoint.
+		// Public clients (PKCE-only, e.g. MCP) skip this check.
+		const client = await this.getOAuthClient(params.clientId);
+		if (!client) throw new Error('Invalid client');
+		if (client.isConfidential && client.clientSecret) {
+			if (!params.clientSecret || params.clientSecret !== client.clientSecret) {
+				throw new Error('Invalid client_secret');
+			}
+		}
 
 		// Verify PKCE
 		const expectedChallenge = crypto
@@ -67,10 +78,7 @@ export class AuthService {
 		await this.db.delete(oauthCodes).where(eq(oauthCodes.code, params.code));
 
 		// Get user with role
-		const [user] = await this.db
-			.select()
-			.from(users)
-			.where(eq(users.id, authCode.userId));
+		const [user] = await this.db.select().from(users).where(eq(users.id, authCode.userId));
 
 		if (!user) throw new Error('User not found');
 		const [account] = user.accountId
@@ -110,10 +118,7 @@ export class AuthService {
 			.where(eq(refreshTokens.id, token.id));
 
 		// Get user
-		const [user] = await this.db
-			.select()
-			.from(users)
-			.where(eq(users.id, token.userId));
+		const [user] = await this.db.select().from(users).where(eq(users.id, token.userId));
 
 		if (!user) throw new Error('User not found');
 		const [account] = user.accountId
@@ -152,6 +157,41 @@ export class AuthService {
 		return client ?? null;
 	}
 
+	async registerDynamicClient(params: {
+		clientName: string;
+		redirectUris: string[];
+		isPublic?: boolean;
+	}): Promise<{
+		clientId: string;
+		clientSecret?: string;
+		clientIdIssuedAt: number;
+		redirectUris: string[];
+		tokenEndpointAuthMethod: 'none' | 'client_secret_post';
+	}> {
+		const isPublic = params.isPublic ?? true;
+		const clientId = `mcp-${crypto.randomBytes(12).toString('base64url')}`;
+		const clientSecret = isPublic ? null : crypto.randomBytes(32).toString('base64url');
+
+		const [created] = await this.db
+			.insert(oauthClients)
+			.values({
+				clientId,
+				clientSecret,
+				name: params.clientName.slice(0, 255),
+				redirectUris: params.redirectUris,
+				isConfidential: !isPublic,
+			})
+			.returning();
+
+		return {
+			clientId: created.clientId,
+			clientSecret: clientSecret ?? undefined,
+			clientIdIssuedAt: Math.floor(Date.now() / 1000),
+			redirectUris: created.redirectUris,
+			tokenEndpointAuthMethod: isPublic ? 'none' : 'client_secret_post',
+		};
+	}
+
 	async createDeviceAuthorization(params: { clientId: string; scope?: string }) {
 		const client = await this.getOAuthClient(params.clientId);
 		if (!client) throw new Error('Invalid client');
@@ -188,7 +228,9 @@ export class AuthService {
 	}
 
 	async approveDeviceAuthorization(params: { userCode: string; userId: string }) {
-		const mapping = await this.cache.get<{ deviceCode: string }>(`oauth:usercode:${params.userCode}`);
+		const mapping = await this.cache.get<{ deviceCode: string }>(
+			`oauth:usercode:${params.userCode}`,
+		);
 		if (!mapping?.deviceCode) throw new Error('Invalid user code');
 
 		const key = `oauth:device:${mapping.deviceCode}`;
@@ -221,10 +263,7 @@ export class AuthService {
 		if (Date.now() > entry.expiresAt) throw new Error('expired_token');
 		if (!entry.approved || !entry.userId) throw new Error('authorization_pending');
 
-		const [user] = await this.db
-			.select()
-			.from(users)
-			.where(eq(users.id, entry.userId));
+		const [user] = await this.db.select().from(users).where(eq(users.id, entry.userId));
 		if (!user) throw new Error('invalid_grant');
 
 		const [account] = user.accountId
@@ -253,7 +292,7 @@ export class AuthService {
 			role: params.user.roleId ?? '',
 			scopes: params.scope ?? '',
 			account_id: params.user.accountId ?? undefined,
-			limits_tier: (params.account?.limitsTier as 'unverified' | 'verified' | undefined),
+			limits_tier: params.account?.limitsTier as 'unverified' | 'verified' | undefined,
 			token_type: 'team',
 		});
 

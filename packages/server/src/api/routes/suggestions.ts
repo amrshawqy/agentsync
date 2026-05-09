@@ -1,8 +1,8 @@
 import { Hono } from 'hono';
+import { hasAdminAccess } from '../../services/auth/admin-access.js';
 import type { ServiceContainer } from '../../services/index.js';
 import { authMiddleware } from '../middleware/auth.js';
 import { getRequestContext, requireAdmin } from '../middleware/route-authz.js';
-import { hasAdminAccess } from '../../services/auth/admin-access.js';
 
 export function createSuggestionRoutes(services: ServiceContainer): Hono {
 	const app = new Hono();
@@ -14,16 +14,13 @@ export function createSuggestionRoutes(services: ServiceContainer): Hono {
 		const ctx = getRequestContext(c);
 		const isAdmin = await hasAdminAccess(services.permission, ctx);
 
-		let suggestions;
-		if (isAdmin) {
-			suggestions = all
+		const suggestions = isAdmin
+			? all
 				? await services.suggestion.listAll(ctx.teamId)
-				: await services.suggestion.listPending(ctx.teamId);
-		} else {
-			suggestions = all
+				: await services.suggestion.listPending(ctx.teamId)
+			: all
 				? await services.suggestion.listByUser(ctx.teamId, ctx.userId)
 				: await services.suggestion.listPendingByUser(ctx.teamId, ctx.userId);
-		}
 
 		return c.json({ success: true, data: suggestions });
 	});

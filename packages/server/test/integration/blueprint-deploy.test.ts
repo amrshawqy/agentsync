@@ -1,7 +1,7 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { BlueprintService } from '../../src/services/blueprint/blueprint.service.js';
 import { ProvenanceService } from '../../src/services/data/provenance.service.js';
-import { createMockSchemaService, createMockConstraintService } from './setup.js';
+import { createMockConstraintService, createMockSchemaService } from './setup.js';
 
 describe('BlueprintService deploy()', () => {
 	let db: any;
@@ -37,12 +37,8 @@ describe('BlueprintService deploy()', () => {
 			],
 		},
 		seedData: {
-			companies: [
-				{ name: 'Acme Corp', website: 'https://acme.com' },
-			],
-			contacts: [
-				{ name: 'John Doe', company_id: '@ref:companies:0' },
-			],
+			companies: [{ name: 'Acme Corp', website: 'https://acme.com' }],
+			contacts: [{ name: 'John Doe', company_id: '@ref:companies:0' }],
 		},
 	};
 
@@ -119,13 +115,15 @@ describe('BlueprintService deploy()', () => {
 	});
 
 	it('throws on constraint validation failure in seed data', async () => {
-		constraintService.validate.mockResolvedValueOnce([]).mockResolvedValueOnce([
-			{ code: 'REQUIRED_FIELD_MISSING', field: 'name', message: 'name is required' },
-		]);
+		constraintService.validate
+			.mockResolvedValueOnce([])
+			.mockResolvedValueOnce([
+				{ code: 'REQUIRED_FIELD_MISSING', field: 'name', message: 'name is required' },
+			]);
 
-		await expect(
-			service.deploy('team-1', 'crm', { includeSeedData: true }),
-		).rejects.toThrow('Seed data validation failed');
+		await expect(service.deploy('team-1', 'crm', { includeSeedData: true })).rejects.toThrow(
+			'Seed data validation failed',
+		);
 	});
 
 	it('uses ProvenanceService for seed data with 0.8 confidence', async () => {
@@ -133,11 +131,7 @@ describe('BlueprintService deploy()', () => {
 
 		await service.deploy('team-1', 'crm', { includeSeedData: true });
 
-		expect(buildSpy).toHaveBeenCalledWith(
-			expect.any(Object),
-			'blueprint-seed',
-			0.8,
-		);
+		expect(buildSpy).toHaveBeenCalledWith(expect.any(Object), 'blueprint-seed', 0.8);
 	});
 
 	it('resolves @ref: cross-references in seed data', async () => {

@@ -10,14 +10,20 @@ export function createUploadRoutes(services: ServiceContainer): Hono {
 	// Generate presigned upload URL
 	app.post('/presign', async (c) => {
 		if (!services.storage) {
-			return c.json({ error: { code: 'STORAGE_DISABLED', message: 'File storage is not configured' } }, 501);
+			return c.json(
+				{ error: { code: 'STORAGE_DISABLED', message: 'File storage is not configured' } },
+				501,
+			);
 		}
 
 		const body = await c.req.json();
 		const { fileName, mimeType } = body;
 
 		if (!fileName || !mimeType) {
-			return c.json({ error: { code: 'BAD_REQUEST', message: 'fileName and mimeType are required' } }, 400);
+			return c.json(
+				{ error: { code: 'BAD_REQUEST', message: 'fileName and mimeType are required' } },
+				400,
+			);
 		}
 
 		const teamId = c.get('teamId');
@@ -29,12 +35,18 @@ export function createUploadRoutes(services: ServiceContainer): Hono {
 	// Generate presigned download URL
 	app.get('/download', async (c) => {
 		if (!services.storage) {
-			return c.json({ error: { code: 'STORAGE_DISABLED', message: 'File storage is not configured' } }, 501);
+			return c.json(
+				{ error: { code: 'STORAGE_DISABLED', message: 'File storage is not configured' } },
+				501,
+			);
 		}
 
 		const path = c.req.query('path');
 		if (!path) {
-			return c.json({ error: { code: 'BAD_REQUEST', message: 'path query parameter is required' } }, 400);
+			return c.json(
+				{ error: { code: 'BAD_REQUEST', message: 'path query parameter is required' } },
+				400,
+			);
 		}
 
 		const downloadUrl = await services.storage.generateDownloadUrl(path);

@@ -32,16 +32,12 @@ export function createMarketplaceRoutes(services: ServiceContainer): Hono {
 	// Submit a review (authenticated)
 	app.post('/blueprints/:id/reviews', authMiddleware, async (c) => {
 		const body = await c.req.json();
-		const review = await services.marketplace.submitReview(
-			c.get('teamId'),
-			c.get('userId'),
-			{
-				blueprintId: c.req.param('id'),
-				rating: body.rating,
-				title: body.title,
-				body: body.body,
-			},
-		);
+		const review = await services.marketplace.submitReview(c.get('teamId'), c.get('userId'), {
+			blueprintId: c.req.param('id'),
+			rating: body.rating,
+			title: body.title,
+			body: body.body,
+		});
 		return c.json({ success: true, data: review }, 201);
 	});
 

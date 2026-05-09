@@ -1,13 +1,13 @@
+import type { EventPayload } from '@agentsync/types';
+import { getWebhookUrlConfig } from '../../config.js';
 import { logger } from '../../infra/logger.js';
 import { validateWebhookUrl } from '../../infra/url-validator.js';
-import { getWebhookUrlConfig } from '../../config.js';
-import type { EventPayload } from '@agentsync/types';
 
 const MAX_RETRIES = 3;
 const BACKOFF_BASE = 1000;
 
 export class WebhookSender {
-	async send(url: string, event: EventPayload, retries: number = 0): Promise<boolean> {
+	async send(url: string, event: EventPayload, retries = 0): Promise<boolean> {
 		try {
 			// Defense in depth: validate URL before every send attempt
 			await validateWebhookUrl(url, getWebhookUrlConfig());
@@ -52,12 +52,8 @@ export class WebhookSender {
 		}
 	}
 
-	private async retry(
-		url: string,
-		event: EventPayload,
-		retries: number,
-	): Promise<boolean> {
-		const delay = BACKOFF_BASE * Math.pow(2, retries);
+	private async retry(url: string, event: EventPayload, retries: number): Promise<boolean> {
+		const delay = BACKOFF_BASE * 2 ** retries;
 		logger.debug('Webhook retry scheduled', {
 			url,
 			eventId: event.eventId,

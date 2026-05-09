@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { BlueprintService } from '../../src/services/blueprint/blueprint.service.js';
 
 function createMockDeps() {
@@ -41,18 +41,20 @@ function createMockDeps() {
 				}),
 			}),
 		}),
-		transaction: vi.fn(async (fn: any) => fn({
-			insert: vi.fn().mockReturnValue({
-				values: vi.fn().mockReturnValue({
-					returning: vi.fn().mockResolvedValue([{ id: 'ws-1', slug: 'crm', name: 'CRM' }]),
+		transaction: vi.fn(async (fn: any) =>
+			fn({
+				insert: vi.fn().mockReturnValue({
+					values: vi.fn().mockReturnValue({
+						returning: vi.fn().mockResolvedValue([{ id: 'ws-1', slug: 'crm', name: 'CRM' }]),
+					}),
+				}),
+				update: vi.fn().mockReturnValue({
+					set: vi.fn().mockReturnValue({
+						where: vi.fn().mockResolvedValue(undefined),
+					}),
 				}),
 			}),
-			update: vi.fn().mockReturnValue({
-				set: vi.fn().mockReturnValue({
-					where: vi.fn().mockResolvedValue(undefined),
-				}),
-			}),
-		})),
+		),
 	} as any;
 
 	const schemaService = {
@@ -74,13 +76,21 @@ function createMockDeps() {
 describe('BlueprintService', () => {
 	it('create validates schema and inserts blueprint', async () => {
 		const deps = createMockDeps();
-		const service = new BlueprintService(deps.db, deps.schemaService, deps.constraintService, deps.provenanceService);
+		const service = new BlueprintService(
+			deps.db,
+			deps.schemaService,
+			deps.constraintService,
+			deps.provenanceService,
+		);
 
-		const result = await service.create({
-			slug: 'crm',
-			name: 'CRM',
-			schemaDefinition: { tables: [] },
-		}, 'team-1');
+		const result = await service.create(
+			{
+				slug: 'crm',
+				name: 'CRM',
+				schemaDefinition: { tables: [] },
+			},
+			'team-1',
+		);
 
 		expect(deps.db.insert).toHaveBeenCalled();
 		expect(result).toBeDefined();
@@ -89,22 +99,34 @@ describe('BlueprintService', () => {
 
 	it('create throws on invalid blueprint schema', async () => {
 		const deps = createMockDeps();
-		const service = new BlueprintService(deps.db, deps.schemaService, deps.constraintService, deps.provenanceService);
+		const service = new BlueprintService(
+			deps.db,
+			deps.schemaService,
+			deps.constraintService,
+			deps.provenanceService,
+		);
 
-		await expect(service.create({
-			slug: 'bad',
-			name: 'Bad',
-			schemaDefinition: null as any,
-		})).rejects.toThrow();
+		await expect(
+			service.create({
+				slug: 'bad',
+				name: 'Bad',
+				schemaDefinition: null as any,
+			}),
+		).rejects.toThrow();
 	});
 
 	it('getBySlug returns latest version', async () => {
 		const deps = createMockDeps();
-		const service = new BlueprintService(deps.db, deps.schemaService, deps.constraintService, deps.provenanceService);
+		const service = new BlueprintService(
+			deps.db,
+			deps.schemaService,
+			deps.constraintService,
+			deps.provenanceService,
+		);
 
 		const result = await service.getBySlug('crm');
 		expect(result).toBeDefined();
-		expect(result!.slug).toBe('crm');
+		expect(result?.slug).toBe('crm');
 	});
 
 	it('evolve creates new version with incremented version number', async () => {
@@ -114,7 +136,12 @@ describe('BlueprintService', () => {
 				returning: vi.fn().mockResolvedValue([{ ...deps.mockBlueprint, version: 2 }]),
 			}),
 		});
-		const service = new BlueprintService(deps.db, deps.schemaService, deps.constraintService, deps.provenanceService);
+		const service = new BlueprintService(
+			deps.db,
+			deps.schemaService,
+			deps.constraintService,
+			deps.provenanceService,
+		);
 
 		const result = await service.evolve('crm', { tables: [{ slug: 'new_table' }] });
 		expect(result.version).toBe(2);
@@ -129,14 +156,24 @@ describe('BlueprintService', () => {
 				}),
 			}),
 		});
-		const service = new BlueprintService(deps.db, deps.schemaService, deps.constraintService, deps.provenanceService);
+		const service = new BlueprintService(
+			deps.db,
+			deps.schemaService,
+			deps.constraintService,
+			deps.provenanceService,
+		);
 
 		await expect(service.evolve('nonexistent', {})).rejects.toThrow('Blueprint not found');
 	});
 
 	it('publish sets isPublished to true', async () => {
 		const deps = createMockDeps();
-		const service = new BlueprintService(deps.db, deps.schemaService, deps.constraintService, deps.provenanceService);
+		const service = new BlueprintService(
+			deps.db,
+			deps.schemaService,
+			deps.constraintService,
+			deps.provenanceService,
+		);
 
 		const result = await service.publish('crm');
 		expect(result.isPublished).toBe(true);
@@ -151,7 +188,12 @@ describe('BlueprintService', () => {
 				}),
 			}),
 		});
-		const service = new BlueprintService(deps.db, deps.schemaService, deps.constraintService, deps.provenanceService);
+		const service = new BlueprintService(
+			deps.db,
+			deps.schemaService,
+			deps.constraintService,
+			deps.provenanceService,
+		);
 
 		await expect(service.publish('nonexistent')).rejects.toThrow('Blueprint not found');
 	});
@@ -159,13 +201,20 @@ describe('BlueprintService', () => {
 	it('deploy creates workspace and tables in transaction', async () => {
 		const deps = createMockDeps();
 		deps.mockBlueprint.schemaDefinition = {
-			tables: [{
-				slug: 'contacts',
-				name: 'Contacts',
-				fields: [{ slug: 'name', name: 'Name', fieldType: 'text' }],
-			}],
+			tables: [
+				{
+					slug: 'contacts',
+					name: 'Contacts',
+					fields: [{ slug: 'name', name: 'Name', fieldType: 'text' }],
+				},
+			],
 		};
-		const service = new BlueprintService(deps.db, deps.schemaService, deps.constraintService, deps.provenanceService);
+		const service = new BlueprintService(
+			deps.db,
+			deps.schemaService,
+			deps.constraintService,
+			deps.provenanceService,
+		);
 
 		const result = await service.deploy('team-1', 'crm', {
 			workspaceName: 'My CRM',

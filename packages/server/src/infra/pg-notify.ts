@@ -32,7 +32,7 @@ export class PgNotifyListener {
 				});
 			}
 		}
-		this.handlers.get(channel)!.add(handler);
+		this.handlers.get(channel)?.add(handler);
 	}
 
 	unsubscribe(channel: string, handler: NotifyHandler): void {

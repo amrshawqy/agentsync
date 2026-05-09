@@ -1,9 +1,11 @@
-import { pgTable, uuid, varchar, text, integer, boolean, timestamp } from 'drizzle-orm/pg-core';
+import { boolean, integer, pgTable, text, timestamp, uuid, varchar } from 'drizzle-orm/pg-core';
 import { teams } from './teams.js';
 
 export const instructions = pgTable('instructions', {
 	id: uuid('id').primaryKey().defaultRandom(),
-	teamId: uuid('team_id').notNull().references(() => teams.id),
+	teamId: uuid('team_id')
+		.notNull()
+		.references(() => teams.id),
 	scope: varchar('scope', { length: 50 }).notNull(),
 	scopeId: uuid('scope_id'),
 	instructionType: varchar('instruction_type', { length: 50 }),

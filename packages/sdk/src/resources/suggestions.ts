@@ -19,10 +19,16 @@ export class SuggestionResource {
 	}
 
 	async approve(suggestionId: string, note?: string): Promise<ApiResponse<SchemaField>> {
-		return this.request<ApiResponse<SchemaField>>('POST', `/v1/suggestions/${suggestionId}/approve`, { note });
+		return this.request<ApiResponse<SchemaField>>(
+			'POST',
+			`/v1/suggestions/${suggestionId}/approve`,
+			{ note },
+		);
 	}
 
 	async reject(suggestionId: string, note?: string): Promise<ApiResponse<void>> {
-		return this.request<ApiResponse<void>>('POST', `/v1/suggestions/${suggestionId}/reject`, { note });
+		return this.request<ApiResponse<void>>('POST', `/v1/suggestions/${suggestionId}/reject`, {
+			note,
+		});
 	}
 }

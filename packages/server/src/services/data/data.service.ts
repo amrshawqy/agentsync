@@ -1,20 +1,21 @@
-import { eq, and, sql } from 'drizzle-orm';
 import type { Database } from '@agentsync/db';
-import { records, recordIndexes } from '@agentsync/db';
-import type { CreateRecord, UpdateRecord, QueryRecords } from '@agentsync/types';
+import { recordIndexes, records } from '@agentsync/db';
+import type { CreateRecord, QueryRecords, UpdateRecord } from '@agentsync/types';
 import type { RequestContext } from '@agentsync/types';
 import type { PermissionEvaluation } from '@agentsync/types';
-import type { ProvenanceService } from './provenance.service.js';
-import type { IndexService } from './index.service.js';
-import type { RelationService } from './relation.service.js';
-import type { SearchService } from './search.service.js';
-import type { ConstraintService } from '../schema/constraint.service.js';
-import type { PermissionService } from '../auth/permission.service.js';
-import type { SchemaService } from '../schema/schema.service.js';
-import type { EventService } from '../event/event.service.js';
+import { and, eq, sql } from 'drizzle-orm';
 import type { AuditService } from '../audit/audit.service.js';
+import type { PermissionService } from '../auth/permission.service.js';
+import type { EventService } from '../event/event.service.js';
+import type { ConstraintService } from '../schema/constraint.service.js';
+import type { SchemaService } from '../schema/schema.service.js';
 import type { FormulaEngine } from './formula-engine.js';
+import type { IndexService } from './index.service.js';
+import type { ProvenanceService } from './provenance.service.js';
+import type { RelationService } from './relation.service.js';
+import type { RevisionService } from './revision.service.js';
 import type { RollupEngine } from './rollup-engine.js';
+import type { SearchService } from './search.service.js';
 
 export class DataService {
 	constructor(
@@ -30,6 +31,7 @@ export class DataService {
 		private auditService?: AuditService,
 		private formulaEngine?: FormulaEngine,
 		private rollupEngine?: RollupEngine,
+		private revisionService?: RevisionService,
 	) {}
 
 	private async checkPermission(
@@ -154,16 +156,30 @@ export class DataService {
 			// Update indexes
 			await this.indexService.updateIndexes(rec.id, ctx.teamId, input.tableId, input.data, tx);
 
+			if (this.revisionService) {
+				await this.revisionService.record(tx, {
+					recordId: rec.id,
+					teamId: ctx.teamId,
+					revisionKind: 'create',
+					data: input.data,
+					provenance,
+					createdBy: ctx.userId || null,
+				});
+			}
+
 			// Create relations if specified
 			if (input.links) {
 				for (const link of input.links) {
-					await this.relationService.link({
-						teamId: ctx.teamId,
-						sourceRecordId: rec.id,
-						targetRecordId: link.targetRecordId,
-						relationType: link.relationType,
-						createdBy: ctx.userId,
-					}, tx);
+					await this.relationService.link(
+						{
+							teamId: ctx.teamId,
+							sourceRecordId: rec.id,
+							targetRecordId: link.targetRecordId,
+							relationType: link.relationType,
+							createdBy: ctx.userId,
+						},
+						tx,
+					);
 				}
 			}
 
@@ -221,7 +237,12 @@ export class DataService {
 			data = { ...data, ...computed };
 		}
 		if (this.rollupEngine) {
-			const rollups = await this.rollupEngine.resolveRollups(recordId, record.teamId, data, fields as any);
+			const rollups = await this.rollupEngine.resolveRollups(
+				recordId,
+				record.teamId,
+				data,
+				fields as any,
+			);
 			data = { ...data, ...rollups };
 		}
 
@@ -230,7 +251,11 @@ export class DataService {
 		return this.filterHiddenFields(full, permResult.fieldAccess) as typeof full;
 	}
 
-	async updateRecord(ctx: RequestContext, recordId: string, input: UpdateRecord & { confidence?: number }) {
+	async updateRecord(
+		ctx: RequestContext,
+		recordId: string,
+		input: UpdateRecord & { confidence?: number },
+	) {
 		// Get existing record
 		const [existing] = await this.db
 			.select()
@@ -287,6 +312,17 @@ export class DataService {
 			// Update indexes
 			await this.indexService.updateIndexes(recordId, ctx.teamId, existing.tableId, mergedData, tx);
 
+			if (this.revisionService) {
+				await this.revisionService.record(tx, {
+					recordId,
+					teamId: ctx.teamId,
+					revisionKind: 'update',
+					data: mergedData,
+					provenance: mergedProvenance,
+					createdBy: ctx.userId || null,
+				});
+			}
+
 			return rec;
 		});
 
@@ -308,6 +344,91 @@ export class DataService {
 				resourceId: recordId,
 				tableId: existing.tableId,
 				metadata: { updates: input.data },
+			});
+		}
+
+		return this.filterHiddenFields(updated, permResult.fieldAccess) as typeof updated;
+	}
+
+	async revertRecord(ctx: RequestContext, recordId: string, revisionId: string) {
+		if (!this.revisionService) {
+			throw new Error('Revisions are not enabled on this server');
+		}
+		const [existing] = await this.db
+			.select()
+			.from(records)
+			.where(
+				and(
+					eq(records.id, recordId),
+					eq(records.teamId, ctx.teamId),
+					sql`records.deleted_at IS NULL`,
+				),
+			);
+		if (!existing) throw new Error('Record not found');
+
+		const revision = await this.revisionService.getById(revisionId, ctx.teamId);
+		if (!revision || revision.recordId !== recordId) {
+			throw new Error('Revision not found');
+		}
+
+		const permResult = await this.checkPermission(ctx, existing.tableId, 'update', {
+			recordOwnerId: existing.createdBy ?? undefined,
+			recordData: existing.data as Record<string, unknown>,
+		});
+
+		const restoredData = revision.data as Record<string, unknown>;
+		const restoredProvenance = (revision.provenance ?? {}) as Record<string, unknown>;
+
+		const updated = await this.db.transaction(async (tx) => {
+			const [rec] = await tx
+				.update(records)
+				.set({
+					data: restoredData,
+					provenance: restoredProvenance,
+					updatedBy: ctx.userId,
+					updatedAt: new Date(),
+				})
+				.where(eq(records.id, recordId))
+				.returning();
+
+			await this.indexService.updateIndexes(
+				recordId,
+				ctx.teamId,
+				existing.tableId,
+				restoredData,
+				tx,
+			);
+
+			await this.revisionService?.record(tx, {
+				recordId,
+				teamId: ctx.teamId,
+				revisionKind: 'revert',
+				data: restoredData,
+				provenance: restoredProvenance,
+				createdBy: ctx.userId || null,
+				note: `revert to revision ${revisionId}`,
+			});
+
+			return rec;
+		});
+
+		const eventScope = await this.resolveEventScope(existing.tableId);
+		if (this.eventService) {
+			await this.eventService.emit({
+				eventType: 'record.updated',
+				teamId: ctx.teamId,
+				...eventScope,
+				recordId,
+				data: restoredData,
+			});
+		}
+		if (this.auditService) {
+			await this.auditService.log(ctx, {
+				action: 'update',
+				resourceType: 'record',
+				resourceId: recordId,
+				tableId: existing.tableId,
+				metadata: { revertedToRevisionId: revisionId },
 			});
 		}
 
@@ -346,6 +467,18 @@ export class DataService {
 
 		// Clean up indexes
 		await this.indexService.deleteIndexes(recordId);
+
+		if (this.revisionService) {
+			await this.revisionService.record(this.db, {
+				recordId,
+				teamId: ctx.teamId,
+				revisionKind: 'delete',
+				data: existing.data,
+				provenance: existing.provenance as Record<string, unknown> | null,
+				createdBy: ctx.userId || null,
+				note: reason,
+			});
+		}
 
 		// Emit event + audit
 		const eventScope = await this.resolveEventScope(existing.tableId);
@@ -409,7 +542,13 @@ export class DataService {
 				query: input.search,
 			});
 			if (matchingIds.length === 0) {
-				return { data: [], total: 0, limit: input.limit ?? 50, offset: input.offset ?? 0, hasMore: false };
+				return {
+					data: [],
+					total: 0,
+					limit: input.limit ?? 50,
+					offset: input.offset ?? 0,
+					hasMore: false,
+				};
 			}
 			conditions.push(sql`records.id = ANY(${matchingIds})`);
 		}
@@ -427,10 +566,7 @@ export class DataService {
 		const offset = input.offset ?? 0;
 
 		// Build query with sort
-		let query = this.db
-			.select()
-			.from(records)
-			.where(whereClause);
+		let query = this.db.select().from(records).where(whereClause);
 
 		// Apply sort parameter
 		if (input.sort?.length) {
@@ -453,13 +589,19 @@ export class DataService {
 		if (this.formulaEngine) {
 			const fields = await this.schemaService.getFieldsForTable(input.tableId);
 			processedResults = results.map((rec: any) => {
-				const computed = this.formulaEngine!.resolveFormulas(rec.data as Record<string, unknown>, fields as any);
+				const computed = this.formulaEngine?.resolveFormulas(
+					rec.data as Record<string, unknown>,
+					fields as any,
+				);
 				return { ...rec, data: { ...(rec.data as Record<string, unknown>), ...computed } };
 			});
 		}
 
 		// Filter hidden fields from results
-		const filteredData = this.filterHiddenFields(processedResults, permResult.fieldAccess) as typeof results;
+		const filteredData = this.filterHiddenFields(
+			processedResults,
+			permResult.fieldAccess,
+		) as typeof results;
 
 		return {
 			data: filteredData,
@@ -534,13 +676,12 @@ export class DataService {
 			for (const data of items) {
 				const violations = await this.constraintService.validate(tableId, data);
 				if (violations.length > 0) {
-					throw new Error(`Validation failed for item: ${violations.map((v) => v.message).join('; ')}`);
+					throw new Error(
+						`Validation failed for item: ${violations.map((v) => v.message).join('; ')}`,
+					);
 				}
 
-				const provenance = this.provenanceService.buildProvenance(
-					data,
-					ctx.agentId ?? ctx.userId,
-				);
+				const provenance = this.provenanceService.buildProvenance(data, ctx.agentId ?? ctx.userId);
 
 				const [rec] = await tx
 					.insert(records)
@@ -564,13 +705,17 @@ export class DataService {
 		const eventScope = await this.resolveEventScope(tableId);
 		if (this.eventService) {
 			for (const rec of created) {
-				this.eventService.emit({
-					eventType: 'record.created',
-					teamId: ctx.teamId,
-					...eventScope,
-					recordId: rec.id,
-					data: rec.data as Record<string, unknown>,
-				}).catch(() => { /* fire-and-forget */ });
+				this.eventService
+					.emit({
+						eventType: 'record.created',
+						teamId: ctx.teamId,
+						...eventScope,
+						recordId: rec.id,
+						data: rec.data as Record<string, unknown>,
+					})
+					.catch(() => {
+						/* fire-and-forget */
+					});
 			}
 		}
 

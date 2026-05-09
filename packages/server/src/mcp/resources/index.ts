@@ -1,11 +1,13 @@
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { ServiceContainer } from '../../services/index.js';
 
 export function registerResources(mcp: McpServer, services: ServiceContainer) {
 	mcp.resource(
 		'schema-overview',
 		'agentsync://schema/overview',
-		{ description: 'Full accessible schema with workspaces, tables, fields, hints, and constraints' },
+		{
+			description: 'Full accessible schema with workspaces, tables, fields, hints, and constraints',
+		},
 		async (uri, extra) => {
 			const teamId = (extra as any)?.teamId ?? '';
 			const overview = await services.schema.getSchemaOverview(teamId);
@@ -55,19 +57,23 @@ export function registerResources(mcp: McpServer, services: ServiceContainer) {
 			try {
 				const stats = await services.schema.getWorkspaceStats(teamId, slug);
 				return {
-					contents: [{
-						uri: uri.href,
-						mimeType: 'application/json',
-						text: JSON.stringify(stats, null, 2),
-					}],
+					contents: [
+						{
+							uri: uri.href,
+							mimeType: 'application/json',
+							text: JSON.stringify(stats, null, 2),
+						},
+					],
 				};
 			} catch {
 				return {
-					contents: [{
-						uri: uri.href,
-						mimeType: 'application/json',
-						text: JSON.stringify({ error: 'Workspace not found' }),
-					}],
+					contents: [
+						{
+							uri: uri.href,
+							mimeType: 'application/json',
+							text: JSON.stringify({ error: 'Workspace not found' }),
+						},
+					],
 				};
 			}
 		},

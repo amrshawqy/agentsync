@@ -1,36 +1,39 @@
-import { Hono } from 'hono';
+import { createDb } from '@agentsync/db';
 import { serve } from '@hono/node-server';
+import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js';
+import { sql } from 'drizzle-orm';
+import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { logger as honoLogger } from 'hono/logger';
-import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js';
-import { createDb } from '@agentsync/db';
-import { sql } from 'drizzle-orm';
-import { getConfig } from './config.js';
-import { getRedis, closeRedis } from './infra/redis.js';
-import { logger } from './infra/logger.js';
-import { createServices } from './services/index.js';
-import { createMcpServer } from './mcp/server.js';
-import { createOAuthRoutes } from './services/auth/oauth-server.js';
-import { createHealthRoutes } from './api/routes/health.js';
-import { createRecordRoutes } from './api/routes/records.js';
-import { createSchemaRoutes } from './api/routes/schema.js';
-import { createWorkspaceRoutes } from './api/routes/workspaces.js';
-import { createMemberRoutes } from './api/routes/members.js';
-import { createTeamRoutes } from './api/routes/teams.js';
+import { authMiddleware } from './api/middleware/auth.js';
+import { errorHandler } from './api/middleware/error-handler.js';
+import { createRateLimitMiddleware } from './api/middleware/rate-limit.js';
+import { requestIdMiddleware } from './api/middleware/request-id.js';
+import { createTeamContextMiddleware } from './api/middleware/team-context.js';
+import { createAdminRoutes } from './api/routes/admin.js';
+import { createAgentKitRoutes } from './api/routes/agent-kit.js';
+import { createAuditRoutes } from './api/routes/audit.js';
 import { createAuthRoutes } from './api/routes/auth.js';
+import { createAutomationRoutes } from './api/routes/automations.js';
 import { createBlueprintRoutes } from './api/routes/blueprints.js';
 import { createEventRoutes } from './api/routes/events.js';
+import { createExplainRoutes } from './api/routes/explain.js';
+import { createHealthRoutes } from './api/routes/health.js';
 import { createInstructionRoutes } from './api/routes/instructions.js';
-import { createAgentKitRoutes } from './api/routes/agent-kit.js';
-import { createSuggestionRoutes } from './api/routes/suggestions.js';
-import { createAuditRoutes } from './api/routes/audit.js';
-import { createAutomationRoutes } from './api/routes/automations.js';
 import { createMarketplaceRoutes } from './api/routes/marketplace.js';
+import { createMemberRoutes } from './api/routes/members.js';
+import { createRecordRoutes } from './api/routes/records.js';
+import { createSchemaRoutes } from './api/routes/schema.js';
+import { createSuggestionRoutes } from './api/routes/suggestions.js';
+import { createTeamRoutes } from './api/routes/teams.js';
 import { createUploadRoutes } from './api/routes/uploads.js';
-import { errorHandler } from './api/middleware/error-handler.js';
-import { authMiddleware } from './api/middleware/auth.js';
-import { createRateLimitMiddleware } from './api/middleware/rate-limit.js';
-import { createTeamContextMiddleware } from './api/middleware/team-context.js';
+import { createWorkspaceRoutes } from './api/routes/workspaces.js';
+import { getConfig } from './config.js';
+import { logger } from './infra/logger.js';
+import { closeRedis, getRedis } from './infra/redis.js';
+import { createMcpServer } from './mcp/server.js';
+import { createOAuthRoutes } from './services/auth/oauth-server.js';
+import { createServices } from './services/index.js';
 
 async function main() {
 	const config = getConfig();
@@ -47,6 +50,7 @@ async function main() {
 	const app = new Hono();
 
 	// Global middleware
+	app.use('*', requestIdMiddleware());
 	app.use('*', cors());
 	app.use('*', honoLogger());
 	app.onError(errorHandler);
@@ -82,11 +86,49 @@ async function main() {
 	app.route('/v1/automations', createAutomationRoutes(services));
 	app.route('/v1/marketplace', createMarketplaceRoutes(services));
 	app.route('/v1/uploads', createUploadRoutes(services));
+	app.route('/v1/explain', createExplainRoutes(services));
+	app.route('/v1/admin', createAdminRoutes(services, db));
+
+	const protectedResourceMetadataPath = '/.well-known/oauth-protected-resource';
+	const authServerMetadataPath = '/.well-known/oauth-authorization-server';
+
+	app.get(protectedResourceMetadataPath, (c) => {
+		return c.json({
+			resource: `${config.PUBLIC_BASE_URL}/mcp`,
+			authorization_servers: [config.PUBLIC_BASE_URL],
+			bearer_methods_supported: ['header'],
+			scopes_supported: ['mcp:tools', 'mcp:resources'],
+			resource_documentation: `${config.PUBLIC_BASE_URL}/docs`,
+		});
+	});
+
+	app.get(authServerMetadataPath, (c) => {
+		return c.json({
+			issuer: config.PUBLIC_BASE_URL,
+			authorization_endpoint: `${config.PUBLIC_BASE_URL}/oauth/authorize`,
+			token_endpoint: `${config.PUBLIC_BASE_URL}/oauth/token`,
+			registration_endpoint: `${config.PUBLIC_BASE_URL}/oauth/register`,
+			revocation_endpoint: `${config.PUBLIC_BASE_URL}/oauth/revoke`,
+			device_authorization_endpoint: `${config.PUBLIC_BASE_URL}/oauth/device/authorize`,
+			grant_types_supported: [
+				'authorization_code',
+				'refresh_token',
+				'urn:ietf:params:oauth:grant-type:device_code',
+			],
+			response_types_supported: ['code'],
+			code_challenge_methods_supported: ['S256'],
+			token_endpoint_auth_methods_supported: ['client_secret_post', 'none'],
+			scopes_supported: ['mcp:tools', 'mcp:resources'],
+		});
+	});
+
+	const wwwAuthHeader = `Bearer realm="agentsync", resource_metadata="${config.PUBLIC_BASE_URL}${protectedResourceMetadataPath}"`;
 
 	app.all('/mcp', async (c) => {
 		// Extract auth from Bearer token
 		const authHeader = c.req.header('Authorization');
 		if (!authHeader?.startsWith('Bearer ')) {
+			c.header('WWW-Authenticate', wwwAuthHeader);
 			return c.json({ error: { code: 'UNAUTHORIZED', message: 'Missing Bearer token' } }, 401);
 		}
 
@@ -104,12 +146,15 @@ async function main() {
 				permissions: {},
 			};
 		} catch {
+			c.header('WWW-Authenticate', `${wwwAuthHeader}, error="invalid_token"`);
 			return c.json({ error: { code: 'INVALID_TOKEN', message: 'Invalid or expired token' } }, 401);
 		}
 
 		// Build MCP server per request to avoid cross-request auth context bleed.
 		const mcpServer = createMcpServer(services, () => authContext);
-		const transport = new WebStandardStreamableHTTPServerTransport({ sessionIdGenerator: undefined });
+		const transport = new WebStandardStreamableHTTPServerTransport({
+			sessionIdGenerator: undefined,
+		});
 
 		if (authContext.teamId) {
 			await db.execute(sql`SELECT set_config('app.current_team_id', ${authContext.teamId}, false)`);
@@ -125,6 +170,9 @@ async function main() {
 		}
 	});
 
+	// Bootstrap admin: print one-time setup token if no super-admin exists.
+	await services.bootstrap.onServerStart();
+
 	// Start server
 	// Start automation engine
 	await services.automationEngine.start();
@@ -136,7 +184,7 @@ async function main() {
 			hostname: config.HOST,
 		},
 		(info) => {
-			logger.info(`AgentSync server started`, {
+			logger.info('AgentSync server started', {
 				port: info.port,
 				host: config.HOST,
 				env: config.NODE_ENV,

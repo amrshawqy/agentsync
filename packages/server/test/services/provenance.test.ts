@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { ProvenanceService } from '../../src/services/data/provenance.service.js';
 
 describe('ProvenanceService', () => {
@@ -34,7 +34,10 @@ describe('ProvenanceService', () => {
 
 	describe('mergeProvenance', () => {
 		it('updates changed fields only', () => {
-			const existing = service.buildProvenance({ name: 'John', email: 'john@example.com' }, 'agent-1');
+			const existing = service.buildProvenance(
+				{ name: 'John', email: 'john@example.com' },
+				'agent-1',
+			);
 			const originalNameAt = existing.name.at;
 
 			// Small delay to ensure different timestamps
@@ -46,7 +49,10 @@ describe('ProvenanceService', () => {
 		});
 
 		it('preserves existing unchanged fields', () => {
-			const existing = service.buildProvenance({ name: 'John', email: 'john@example.com' }, 'agent-1');
+			const existing = service.buildProvenance(
+				{ name: 'John', email: 'john@example.com' },
+				'agent-1',
+			);
 
 			const updates = { email: 'john.doe@example.com' };
 			const result = service.mergeProvenance(existing, updates, 'agent-2');
@@ -66,10 +72,10 @@ describe('ProvenanceService', () => {
 			});
 
 			expect(result.email.verification).toBeDefined();
-			expect(result.email.verification!.by).toBe('validator-agent');
-			expect(result.email.verification!.method).toBe('dns-check');
-			expect(result.email.verification!.outcome).toBe('valid');
-			expect(result.email.verification!.date).toBeDefined();
+			expect(result.email.verification?.by).toBe('validator-agent');
+			expect(result.email.verification?.method).toBe('dns-check');
+			expect(result.email.verification?.outcome).toBe('valid');
+			expect(result.email.verification?.date).toBeDefined();
 		});
 
 		it('returns provenance unchanged for non-existent field', () => {

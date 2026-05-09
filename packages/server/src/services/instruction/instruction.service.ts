@@ -1,13 +1,13 @@
-import { eq, and } from 'drizzle-orm';
 import type { Database } from '@agentsync/db';
 import { instructions, workspaces } from '@agentsync/db';
 import type { CreateInstruction, UpdateInstruction } from '@agentsync/types';
+import { and, eq } from 'drizzle-orm';
 import type { CacheService } from '../cache/cache.service.js';
 import {
-	assembleTeamContext,
-	assembleWorkspaceContext,
 	assembleBusinessRules,
 	assembleRoleGuidance,
+	assembleTeamContext,
+	assembleWorkspaceContext,
 } from './layers.js';
 
 export class InstructionService {

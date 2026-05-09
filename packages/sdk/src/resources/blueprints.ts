@@ -15,12 +15,25 @@ export class BlueprintResource {
 		return this.request<ApiResponse<Blueprint>>('GET', `/v1/blueprints/${slug}`);
 	}
 
-	async create(input: { slug: string; name: string; schemaDefinition: Blueprint['schemaDefinition']; description?: string; category?: string }): Promise<ApiResponse<Blueprint>> {
+	async create(input: {
+		slug: string;
+		name: string;
+		schemaDefinition: Blueprint['schemaDefinition'];
+		description?: string;
+		category?: string;
+	}): Promise<ApiResponse<Blueprint>> {
 		return this.request<ApiResponse<Blueprint>>('POST', '/v1/blueprints', input);
 	}
 
-	async deploy(slug: string, opts?: { workspaceName?: string; workspaceSlug?: string; includeSeedData?: boolean }): Promise<ApiResponse<Workspace>> {
-		return this.request<ApiResponse<Workspace>>('POST', `/v1/blueprints/${slug}/deploy`, opts ?? {});
+	async deploy(
+		slug: string,
+		opts?: { workspaceName?: string; workspaceSlug?: string; includeSeedData?: boolean },
+	): Promise<ApiResponse<Workspace>> {
+		return this.request<ApiResponse<Workspace>>(
+			'POST',
+			`/v1/blueprints/${slug}/deploy`,
+			opts ?? {},
+		);
 	}
 
 	async evolve(slug: string, changes: Record<string, unknown>): Promise<ApiResponse<Blueprint>> {

@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/amrshawqy/agentsync/security/advisories/new
+    about: Please report security issues privately via GitHub Security Advisories. See SECURITY.md for details.
+  - name: Question or discussion
+    url: https://github.com/amrshawqy/agentsync/discussions
+    about: For "how do I…" or design discussions, please open a Discussion.

@@ -1,16 +1,20 @@
 import crypto from 'node:crypto';
-import { and, eq, gte, sql } from 'drizzle-orm';
 import type { Database } from '@agentsync/db';
 import { accounts, teamInvites, users } from '@agentsync/db';
+import { and, eq, gte, sql } from 'drizzle-orm';
 import { getConfig } from '../../config.js';
 import { logger } from '../../infra/logger.js';
+import type { EmailService } from '../email/email.service.js';
 
 function hashToken(value: string): string {
 	return crypto.createHash('sha256').update(value).digest('hex');
 }
 
 export class InviteService {
-	constructor(private db: Database) {}
+	constructor(
+		private db: Database,
+		private email: EmailService,
+	) {}
 
 	async createInvite(params: {
 		teamId: string;
@@ -90,12 +94,7 @@ export class InviteService {
 		const [invite] = await this.db
 			.select()
 			.from(teamInvites)
-			.where(
-				and(
-					eq(teamInvites.tokenHash, tokenHash),
-					eq(teamInvites.status, 'pending'),
-				),
-			);
+			.where(and(eq(teamInvites.tokenHash, tokenHash), eq(teamInvites.status, 'pending')));
 
 		if (!invite) {
 			throw new Error('Invite not found');
@@ -127,12 +126,7 @@ export class InviteService {
 		const [existingMembership] = await this.db
 			.select()
 			.from(users)
-			.where(
-				and(
-					eq(users.accountId, params.accountId),
-					eq(users.teamId, invite.teamId),
-				),
-			);
+			.where(and(eq(users.accountId, params.accountId), eq(users.teamId, invite.teamId)));
 
 		let membership = existingMembership;
 		if (existingMembership) {
@@ -146,7 +140,8 @@ export class InviteService {
 				.returning();
 			membership = updated;
 		} else {
-			const fallbackEmail = invite.email ?? account.primaryEmail ?? `${account.id.slice(0, 12)}@agent.local`;
+			const fallbackEmail =
+				invite.email ?? account.primaryEmail ?? `${account.id.slice(0, 12)}@agent.local`;
 			const [created] = await this.db
 				.insert(users)
 				.values({
@@ -177,28 +172,11 @@ export class InviteService {
 	}
 
 	private async sendInviteEmail(email: string, inviteLink: string): Promise<void> {
-		const config = getConfig();
-		if (!config.RESEND_API_KEY || !config.EMAIL_FROM) {
-			return;
-		}
-
-		const res = await fetch('https://api.resend.com/emails', {
-			method: 'POST',
-			headers: {
-				Authorization: `Bearer ${config.RESEND_API_KEY}`,
-				'Content-Type': 'application/json',
-			},
-			body: JSON.stringify({
-				from: config.EMAIL_FROM,
-				to: [email],
-				subject: 'You were invited to an AgentSync team',
-				text: `You have been invited to join an AgentSync team. Use this invite code link: ${inviteLink}`,
-			}),
+		await this.email.send({
+			to: email,
+			subject: 'You were invited to an AgentSync team',
+			text: `You have been invited to join an AgentSync team.\n\nOpen this link to accept:\n${inviteLink}\n`,
+			html: `<p>You have been invited to join an AgentSync team.</p><p>Open this link to accept:<br/><a href="${inviteLink}">${inviteLink}</a></p>`,
 		});
-
-		if (!res.ok) {
-			const text = await res.text();
-			throw new Error(`Invite email failed (${res.status}): ${text}`);
-		}
 	}
 }

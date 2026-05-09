@@ -1,7 +1,7 @@
+import type { AgentKitFormat } from '@agentsync/types';
 import { Hono } from 'hono';
 import type { ServiceContainer } from '../../services/index.js';
 import { authMiddleware } from '../middleware/auth.js';
-import type { AgentKitFormat } from '@agentsync/types';
 import { getRequestContext, requireAdmin } from '../middleware/route-authz.js';
 
 export function createAgentKitRoutes(services: ServiceContainer): Hono {

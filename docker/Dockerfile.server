@@ -1,0 +1,54 @@
+# syntax=docker/dockerfile:1.7
+
+FROM node:22-bookworm-slim AS base
+ENV PNPM_HOME=/pnpm \
+    PATH=/pnpm:$PATH \
+    NODE_ENV=production
+RUN corepack enable && corepack prepare pnpm@9.15.4 --activate
+WORKDIR /app
+
+FROM base AS deps
+COPY pnpm-workspace.yaml package.json pnpm-lock.yaml turbo.json tsconfig.base.json ./
+COPY packages/types/package.json ./packages/types/
+COPY packages/db/package.json ./packages/db/
+COPY packages/sdk/package.json ./packages/sdk/
+COPY packages/server/package.json ./packages/server/
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
+
+FROM deps AS build
+COPY packages ./packages
+RUN pnpm --filter @agentsync/types build \
+ && pnpm --filter @agentsync/db build \
+ && pnpm --filter @agentsync/sdk build \
+ && pnpm --filter @agentsync/server build
+
+FROM base AS prod-deps
+COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
+COPY packages/types/package.json ./packages/types/
+COPY packages/db/package.json ./packages/db/
+COPY packages/sdk/package.json ./packages/sdk/
+COPY packages/server/package.json ./packages/server/
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile --prod
+
+FROM node:22-bookworm-slim AS runtime
+ENV NODE_ENV=production \
+    NODE_OPTIONS=--enable-source-maps
+WORKDIR /app
+COPY --from=prod-deps /app/node_modules ./node_modules
+COPY --from=prod-deps /app/packages/types/node_modules ./packages/types/node_modules
+COPY --from=prod-deps /app/packages/db/node_modules ./packages/db/node_modules
+COPY --from=prod-deps /app/packages/sdk/node_modules ./packages/sdk/node_modules
+COPY --from=prod-deps /app/packages/server/node_modules ./packages/server/node_modules
+COPY --from=build /app/packages/types/dist ./packages/types/dist
+COPY --from=build /app/packages/types/package.json ./packages/types/
+COPY --from=build /app/packages/db/dist ./packages/db/dist
+COPY --from=build /app/packages/db/drizzle ./packages/db/drizzle
+COPY --from=build /app/packages/db/package.json ./packages/db/
+COPY --from=build /app/packages/sdk/dist ./packages/sdk/dist
+COPY --from=build /app/packages/sdk/package.json ./packages/sdk/
+COPY --from=build /app/packages/server/dist ./packages/server/dist
+COPY --from=build /app/packages/server/package.json ./packages/server/
+COPY blueprints ./blueprints
+EXPOSE 3000
+USER node
+CMD ["node", "packages/server/dist/index.js"]

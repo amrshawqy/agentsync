@@ -1,11 +1,11 @@
-import { describe, it, expect, beforeAll } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
 import { registerTools } from '../../src/mcp/tools/index.js';
 import {
+	createAuthContextGetter,
 	createMockMcpServer,
 	createMockServiceContainer,
-	createAuthContextGetter,
-	getResultText,
 	getResultJson,
+	getResultText,
 } from './setup.js';
 
 describe('Blueprint Tools', () => {
@@ -224,7 +224,13 @@ describe('Blueprint Tools', () => {
 				{ id: 'bp-hr', slug: 'hr', name: 'HR', category: 'people', version: 1 },
 			]);
 			services.blueprint.listPublished.mockResolvedValueOnce([
-				{ id: 'bp-custom', slug: 'inventory', name: 'Inventory', category: 'operations', version: 1 },
+				{
+					id: 'bp-custom',
+					slug: 'inventory',
+					name: 'Inventory',
+					category: 'operations',
+					version: 1,
+				},
 			]);
 
 			const result = await server.invokeTool('list_blueprints', {});

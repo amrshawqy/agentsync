@@ -1,7 +1,7 @@
-import { and, eq } from 'drizzle-orm';
 import type { Database } from '@agentsync/db';
-import { teams, roles } from '@agentsync/db';
+import { roles, teams } from '@agentsync/db';
 import type { CreateTeam, UpdateTeam } from '@agentsync/types';
+import { and, eq } from 'drizzle-orm';
 
 export class TeamService {
 	constructor(private db: Database) {}
@@ -60,10 +60,7 @@ export class TeamService {
 	}
 
 	async createRole(teamId: string, name: string, permissions: Record<string, unknown>) {
-		const [role] = await this.db
-			.insert(roles)
-			.values({ teamId, name, permissions })
-			.returning();
+		const [role] = await this.db.insert(roles).values({ teamId, name, permissions }).returning();
 		return role;
 	}
 
@@ -75,10 +72,20 @@ export class TeamService {
 		return role ?? null;
 	}
 
-	async updateRoleFieldAccess(roleId: string, workspace: string, table: string, fieldAccess: {
-		hidden?: string[];
-		readOnly?: string[];
-	}) {
+	async getRoleById(roleId: string) {
+		const [role] = await this.db.select().from(roles).where(eq(roles.id, roleId));
+		return role ?? null;
+	}
+
+	async updateRoleFieldAccess(
+		roleId: string,
+		workspace: string,
+		table: string,
+		fieldAccess: {
+			hidden?: string[];
+			readOnly?: string[];
+		},
+	) {
 		const [role] = await this.db.select().from(roles).where(eq(roles.id, roleId));
 		if (!role) throw new Error('Role not found');
 
