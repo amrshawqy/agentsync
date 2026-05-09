@@ -51,6 +51,7 @@ COPY --from=build /app/packages/sdk/package.json ./packages/sdk/
 COPY --from=build /app/packages/server/dist ./packages/server/dist
 COPY --from=build /app/packages/server/package.json ./packages/server/
 COPY blueprints ./blueprints
+COPY SKILL.md ./SKILL.md
 EXPOSE 3000
 USER node
 CMD ["node", "packages/server/dist/index.js"]
