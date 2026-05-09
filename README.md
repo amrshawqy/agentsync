@@ -400,10 +400,8 @@ pnpm test && pnpm build
 ## Documentation
 
 - [Vision](./docs/01-vision.md)
-
 - [Product Spec](./docs/03-product-spec.md)
 - [Technical Architecture](./docs/04-technical-architecture.md)
-
 
 ### Self-host
 
