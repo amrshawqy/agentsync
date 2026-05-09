@@ -1,9 +1,10 @@
 import crypto from 'node:crypto';
-import { and, eq } from 'drizzle-orm';
 import type { Database } from '@agentsync/db';
 import { accounts, emailOtpChallenges } from '@agentsync/db';
+import { and, eq } from 'drizzle-orm';
 import { getConfig } from '../../config.js';
 import { logger } from '../../infra/logger.js';
+import type { EmailService } from '../email/email.service.js';
 
 function hashOtp(value: string): string {
 	return crypto.createHash('sha256').update(value).digest('hex');
@@ -17,7 +18,10 @@ function maskEmail(email: string): string {
 }
 
 export class EmailVerificationService {
-	constructor(private db: Database) {}
+	constructor(
+		private db: Database,
+		private email: EmailService,
+	) {}
 
 	async start(accountId: string, email: string) {
 		const config = getConfig();
@@ -50,10 +54,7 @@ export class EmailVerificationService {
 			.select()
 			.from(emailOtpChallenges)
 			.where(
-				and(
-					eq(emailOtpChallenges.id, challengeId),
-					eq(emailOtpChallenges.accountId, accountId),
-				),
+				and(eq(emailOtpChallenges.id, challengeId), eq(emailOtpChallenges.accountId, accountId)),
 			);
 
 		if (!challenge) {
@@ -101,31 +102,14 @@ export class EmailVerificationService {
 
 	private async sendOtp(email: string, otp: string): Promise<void> {
 		const config = getConfig();
-		if (!config.RESEND_API_KEY || !config.EMAIL_FROM) {
-			logger.warn('Resend is not configured; OTP email not sent', { email });
-			return;
-		}
-
-		const res = await fetch('https://api.resend.com/emails', {
-			method: 'POST',
-			headers: {
-				Authorization: `Bearer ${config.RESEND_API_KEY}`,
-				'Content-Type': 'application/json',
-			},
-			body: JSON.stringify({
-				from: config.EMAIL_FROM,
-				to: [email],
+		try {
+			await this.email.send({
+				to: email,
 				subject: 'Your AgentSync verification code',
 				text: `Your AgentSync verification code is ${otp}. It expires in ${config.EMAIL_OTP_EXPIRY_MINUTES} minutes.`,
-			}),
-		});
-
-		if (!res.ok) {
-			const payload = await res.text();
-			logger.error('Failed to send OTP email', {
-				status: res.status,
-				payload,
 			});
+		} catch (err) {
+			logger.error('Failed to send OTP email', { error: String(err) });
 			throw new Error('Failed to send verification email');
 		}
 	}

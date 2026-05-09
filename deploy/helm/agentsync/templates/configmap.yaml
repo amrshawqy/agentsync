@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "agentsync.fullname" . }}-env
+  labels: {{- include "agentsync.labels" . | nindent 4 }}
+data:
+  PUBLIC_BASE_URL: {{ .Values.publicBaseUrl | quote }}
+  WEB_BASE_URL: {{ default .Values.publicBaseUrl .Values.webBaseUrl | quote }}
+  NODE_ENV: production
+  {{- range $key, $value := .Values.env }}
+  {{ $key }}: {{ $value | quote }}
+  {{- end }}

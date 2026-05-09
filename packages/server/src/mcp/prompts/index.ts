@@ -1,4 +1,4 @@
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import type { ServiceContainer } from '../../services/index.js';
 
@@ -26,7 +26,7 @@ export function registerPrompts(mcp: McpServer, services: ServiceContainer) {
 								'6. Generate seed data for testing',
 								'7. Deploy the blueprint using deploy_blueprint',
 								'',
-								'Start by asking me about the main entities in my ' + args.domain + ' workflow.',
+								`Start by asking me about the main entities in my ${args.domain} workflow.`,
 							].join('\n'),
 						},
 					},

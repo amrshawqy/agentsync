@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { EventService } from '../../src/services/event/event.service.js';
 
 function createMockDeps(webhookSubs: any[] = []) {
@@ -82,17 +82,19 @@ describe('EventService', () => {
 	});
 
 	it('emit sends to webhook subscribers with callbackUrl', async () => {
-		const webhookSubs = [{
-			id: 'sub-2',
-			teamId: 'team-1',
-			eventType: 'record.created',
-			callbackType: 'webhook',
-			callbackUrl: 'https://example.com/hook',
-			isActive: true,
-			workspaceId: null,
-			tableId: null,
-			condition: null,
-		}];
+		const webhookSubs = [
+			{
+				id: 'sub-2',
+				teamId: 'team-1',
+				eventType: 'record.created',
+				callbackType: 'webhook',
+				callbackUrl: 'https://example.com/hook',
+				isActive: true,
+				workspaceId: null,
+				tableId: null,
+				condition: null,
+			},
+		];
 		const deps = createMockDeps(webhookSubs);
 		const service = new EventService(deps.db, deps.dispatcher, deps.sseManager, deps.webhookSender);
 

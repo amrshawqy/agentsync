@@ -1,0 +1,106 @@
+name: agentsync-prod
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-agentsync}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: ${POSTGRES_DB:-agentsync}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-agentsync}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  server:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.server
+    image: agentsync/server:latest
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-agentsync}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-agentsync}
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env}
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:?Set PUBLIC_BASE_URL in .env}
+      WEB_BASE_URL: ${WEB_BASE_URL:-${PUBLIC_BASE_URL}}
+      NODE_ENV: production
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      EMAIL_PROVIDER: ${EMAIL_PROVIDER:-console}
+      EMAIL_FROM: ${EMAIL_FROM:-}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_SECURE: ${SMTP_SECURE:-false}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SES_REGION: ${SES_REGION:-us-east-1}
+      SES_ACCESS_KEY_ID: ${SES_ACCESS_KEY_ID:-}
+      SES_SECRET_ACCESS_KEY: ${SES_SECRET_ACCESS_KEY:-}
+      OIDC_ISSUER: ${OIDC_ISSUER:-}
+      OIDC_CLIENT_ID: ${OIDC_CLIENT_ID:-}
+      OIDC_CLIENT_SECRET: ${OIDC_CLIENT_SECRET:-}
+      BOOTSTRAP_ADMIN_EMAIL: ${BOOTSTRAP_ADMIN_EMAIL:-}
+      SIGNUP_ALLOWED_DOMAINS: ${SIGNUP_ALLOWED_DOMAINS:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"fetch('http://localhost:3000/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))\""]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  web:
+    build:
+      context: ..
+      dockerfile: apps/web/Dockerfile
+    image: agentsync/web:latest
+    restart: unless-stopped
+    depends_on:
+      - server
+    environment:
+      NODE_ENV: production
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:?Set PUBLIC_BASE_URL in .env}
+      AGENTSYNC_API_URL: http://server:3000
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - server
+      - web
+    environment:
+      DOMAIN: ${DOMAIN:?Set DOMAIN in .env (e.g. agentsync.example.com)}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddydata:/data
+      - caddyconfig:/config
+
+volumes:
+  pgdata:
+  redisdata:
+  caddydata:
+  caddyconfig:

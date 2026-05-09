@@ -1,7 +1,12 @@
-import { eq, and, sql } from 'drizzle-orm';
 import type { Database } from '@agentsync/db';
-import { schemaTables, schemaFields, workspaces, records } from '@agentsync/db';
-import type { SchemaField, SchemaTable, CreateSchemaTable, CreateSchemaField } from '@agentsync/types';
+import { records, schemaFields, schemaTables, workspaces } from '@agentsync/db';
+import type {
+	CreateSchemaField,
+	CreateSchemaTable,
+	SchemaField,
+	SchemaTable,
+} from '@agentsync/types';
+import { and, eq, sql } from 'drizzle-orm';
 import type { CacheService } from '../cache/cache.service.js';
 import { resolveSchemaLayers } from './layer-resolver.js';
 
@@ -38,7 +43,7 @@ export class SchemaService {
 			if (!fieldsByTable.has(field.tableId)) {
 				fieldsByTable.set(field.tableId, []);
 			}
-			fieldsByTable.get(field.tableId)!.push(field);
+			fieldsByTable.get(field.tableId)?.push(field);
 		}
 
 		const toResolved = (tables: any[]) =>
@@ -163,12 +168,7 @@ export class SchemaService {
 		const [table] = await this.db
 			.select()
 			.from(schemaTables)
-			.where(
-				and(
-					eq(schemaTables.teamId, teamId),
-					eq(schemaTables.slug, slug),
-				),
-			);
+			.where(and(eq(schemaTables.teamId, teamId), eq(schemaTables.slug, slug)));
 		return table ?? null;
 	}
 
@@ -181,18 +181,12 @@ export class SchemaService {
 	}
 
 	async getWorkspaceById(workspaceId: string) {
-		const [ws] = await this.db
-			.select()
-			.from(workspaces)
-			.where(eq(workspaces.id, workspaceId));
+		const [ws] = await this.db.select().from(workspaces).where(eq(workspaces.id, workspaceId));
 		return ws ?? null;
 	}
 
 	async listWorkspaces(teamId: string) {
-		return this.db
-			.select()
-			.from(workspaces)
-			.where(eq(workspaces.teamId, teamId));
+		return this.db.select().from(workspaces).where(eq(workspaces.teamId, teamId));
 	}
 
 	async createWorkspace(teamId: string, name: string, slug: string, description?: string) {
@@ -204,34 +198,38 @@ export class SchemaService {
 		return ws;
 	}
 
-	async alterTable(teamId: string, tableId: string, changes: {
-		addFields?: Array<{
-			name: string;
-			slug: string;
-			fieldType: string;
-			isRequired?: boolean;
-			isIndexed?: boolean;
-			agentHint?: string;
-			validation?: any;
-			options?: any;
-			constraints?: any;
-			relationConfig?: any;
-			rollupConfig?: any;
-		}>;
-		removeFields?: string[];
-		updateFields?: Array<{
-			slug: string;
-			name?: string;
-			agentHint?: string;
-			isRequired?: boolean;
-			isIndexed?: boolean;
-			validation?: any;
-			options?: any;
-			constraints?: any;
-			relationConfig?: any;
-			rollupConfig?: any;
-		}>;
-	}) {
+	async alterTable(
+		teamId: string,
+		tableId: string,
+		changes: {
+			addFields?: Array<{
+				name: string;
+				slug: string;
+				fieldType: string;
+				isRequired?: boolean;
+				isIndexed?: boolean;
+				agentHint?: string;
+				validation?: any;
+				options?: any;
+				constraints?: any;
+				relationConfig?: any;
+				rollupConfig?: any;
+			}>;
+			removeFields?: string[];
+			updateFields?: Array<{
+				slug: string;
+				name?: string;
+				agentHint?: string;
+				isRequired?: boolean;
+				isIndexed?: boolean;
+				validation?: any;
+				options?: any;
+				constraints?: any;
+				relationConfig?: any;
+				rollupConfig?: any;
+			}>;
+		},
+	) {
 		const table = await this.getTableById(tableId);
 		if (!table || table.teamId !== teamId) throw new Error('Table not found');
 
@@ -306,7 +304,13 @@ export class SchemaService {
 			const [count] = await this.db
 				.select({ count: sql<number>`count(*)` })
 				.from(records)
-				.where(and(eq(records.tableId, table.id), eq(records.teamId, teamId), sql`records.deleted_at IS NULL`));
+				.where(
+					and(
+						eq(records.tableId, table.id),
+						eq(records.teamId, teamId),
+						sql`records.deleted_at IS NULL`,
+					),
+				);
 			totalRecords += Number(count?.count ?? 0);
 		}
 
@@ -318,10 +322,7 @@ export class SchemaService {
 	}
 
 	async getTableById(tableId: string) {
-		const [table] = await this.db
-			.select()
-			.from(schemaTables)
-			.where(eq(schemaTables.id, tableId));
+		const [table] = await this.db.select().from(schemaTables).where(eq(schemaTables.id, tableId));
 		return table ?? null;
 	}
 

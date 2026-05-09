@@ -1,4 +1,10 @@
-import type { ApiResponse, PaginatedResponse, Record, RecordWithRelations, RecordRelation } from '@agentsync/types';
+import type {
+	ApiResponse,
+	PaginatedResponse,
+	Record,
+	RecordRelation,
+	RecordWithRelations,
+} from '@agentsync/types';
 
 export class PaginatedResult<T> {
 	readonly data: T[];
@@ -9,7 +15,10 @@ export class PaginatedResult<T> {
 	private readonly _offset: number;
 	private readonly _fetchNext: (offset: number, limit: number) => Promise<PaginatedResponse<T>>;
 
-	constructor(response: PaginatedResponse<T>, fetchNext: (offset: number, limit: number) => Promise<PaginatedResponse<T>>) {
+	constructor(
+		response: PaginatedResponse<T>,
+		fetchNext: (offset: number, limit: number) => Promise<PaginatedResponse<T>>,
+	) {
 		this.data = response.data;
 		this.total = response.total;
 		this.hasMore = response.hasMore;
@@ -31,7 +40,11 @@ export class PaginatedResult<T> {
 export class RecordResource {
 	constructor(private request: <T>(method: string, path: string, body?: unknown) => Promise<T>) {}
 
-	async create(tableId: string, data: globalThis.Record<string, unknown>, links?: Array<{ targetRecordId: string; relationType: string }>): Promise<ApiResponse<Record>> {
+	async create(
+		tableId: string,
+		data: globalThis.Record<string, unknown>,
+		links?: Array<{ targetRecordId: string; relationType: string }>,
+	): Promise<ApiResponse<Record>> {
 		return this.request<ApiResponse<Record>>('POST', '/v1/records', { tableId, data, links });
 	}
 
@@ -39,7 +52,10 @@ export class RecordResource {
 		return this.request<ApiResponse<RecordWithRelations>>('GET', `/v1/records/${recordId}`);
 	}
 
-	async update(recordId: string, data: globalThis.Record<string, unknown>): Promise<ApiResponse<Record>> {
+	async update(
+		recordId: string,
+		data: globalThis.Record<string, unknown>,
+	): Promise<ApiResponse<Record>> {
 		return this.request<ApiResponse<Record>>('PATCH', `/v1/records/${recordId}`, { data });
 	}
 
@@ -63,16 +79,39 @@ export class RecordResource {
 		return this.request<PaginatedResponse<Record>>('GET', `/v1/records?${searchParams}`);
 	}
 
-	async verify(recordId: string, field: string, method: string, outcome: 'valid' | 'invalid' | 'unconfirmed'): Promise<ApiResponse<Record>> {
-		return this.request<ApiResponse<Record>>('POST', `/v1/records/${recordId}/verify`, { field, method, outcome });
+	async verify(
+		recordId: string,
+		field: string,
+		method: string,
+		outcome: 'valid' | 'invalid' | 'unconfirmed',
+	): Promise<ApiResponse<Record>> {
+		return this.request<ApiResponse<Record>>('POST', `/v1/records/${recordId}/verify`, {
+			field,
+			method,
+			outcome,
+		});
 	}
 
-	async link(sourceId: string, targetId: string, relationType: string): Promise<ApiResponse<RecordRelation>> {
-		return this.request<ApiResponse<RecordRelation>>('POST', `/v1/records/${sourceId}/links`, { targetRecordId: targetId, relationType });
+	async link(
+		sourceId: string,
+		targetId: string,
+		relationType: string,
+	): Promise<ApiResponse<RecordRelation>> {
+		return this.request<ApiResponse<RecordRelation>>('POST', `/v1/records/${sourceId}/links`, {
+			targetRecordId: targetId,
+			relationType,
+		});
 	}
 
-	async unlink(sourceId: string, targetId: string, relationType: string): Promise<ApiResponse<void>> {
-		return this.request<ApiResponse<void>>('DELETE', `/v1/records/${sourceId}/links/${targetId}/${relationType}`);
+	async unlink(
+		sourceId: string,
+		targetId: string,
+		relationType: string,
+	): Promise<ApiResponse<void>> {
+		return this.request<ApiResponse<void>>(
+			'DELETE',
+			`/v1/records/${sourceId}/links/${targetId}/${relationType}`,
+		);
 	}
 
 	async traverse(recordId: string, path: string, depth?: number): Promise<ApiResponse<Record[]>> {
@@ -81,9 +120,15 @@ export class RecordResource {
 		return this.request<ApiResponse<Record[]>>('GET', `/v1/records/${recordId}/traverse?${params}`);
 	}
 
-	async getProvenance(recordId: string, field?: string): Promise<ApiResponse<globalThis.Record<string, unknown>>> {
+	async getProvenance(
+		recordId: string,
+		field?: string,
+	): Promise<ApiResponse<globalThis.Record<string, unknown>>> {
 		const params = field ? `?field=${field}` : '';
-		return this.request<ApiResponse<globalThis.Record<string, unknown>>>('GET', `/v1/records/${recordId}/provenance${params}`);
+		return this.request<ApiResponse<globalThis.Record<string, unknown>>>(
+			'GET',
+			`/v1/records/${recordId}/provenance${params}`,
+		);
 	}
 
 	async queryPaginated(params: {
@@ -94,8 +139,7 @@ export class RecordResource {
 		search?: string;
 	}): Promise<PaginatedResult<Record>> {
 		const response = await this.query(params);
-		const fetchNext = (offset: number, limit: number) =>
-			this.query({ ...params, offset, limit });
+		const fetchNext = (offset: number, limit: number) => this.query({ ...params, offset, limit });
 		return new PaginatedResult(response, fetchNext);
 	}
 
@@ -117,7 +161,41 @@ export class RecordResource {
 		}
 	}
 
-	async bulkImport(tableId: string, records: globalThis.Record<string, unknown>[]): Promise<ApiResponse<Record[]>> {
+	async bulkImport(
+		tableId: string,
+		records: globalThis.Record<string, unknown>[],
+	): Promise<ApiResponse<Record[]>> {
 		return this.request<ApiResponse<Record[]>>('POST', '/v1/records/bulk', { tableId, records });
+	}
+
+	async revisions(
+		recordId: string,
+		params: { limit?: number; offset?: number } = {},
+	): Promise<
+		PaginatedResponse<{
+			id: string;
+			recordId: string;
+			revisionKind: 'create' | 'update' | 'delete' | 'revert';
+			data: globalThis.Record<string, unknown>;
+			provenance: globalThis.Record<string, unknown> | null;
+			note: string | null;
+			createdAt: string;
+			createdBy: string | null;
+		}>
+	> {
+		const search = new URLSearchParams();
+		if (params.limit) search.set('limit', String(params.limit));
+		if (params.offset) search.set('offset', String(params.offset));
+		const qs = search.toString();
+		return this.request<PaginatedResponse<any>>(
+			'GET',
+			`/v1/records/${recordId}/revisions${qs ? `?${qs}` : ''}`,
+		);
+	}
+
+	async revert(recordId: string, revisionId: string): Promise<ApiResponse<Record>> {
+		return this.request<ApiResponse<Record>>('POST', `/v1/records/${recordId}/revert`, {
+			revisionId,
+		});
 	}
 }

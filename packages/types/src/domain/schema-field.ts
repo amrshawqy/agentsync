@@ -1,19 +1,23 @@
 import { z } from 'zod';
 import { FieldType, SourceLayer } from '../enums.js';
 
-export const ValidationSchema = z.object({
-	min: z.number().optional(),
-	max: z.number().optional(),
-	pattern: z.string().optional(),
-	unique: z.boolean().optional(),
-}).passthrough();
+export const ValidationSchema = z
+	.object({
+		min: z.number().optional(),
+		max: z.number().optional(),
+		pattern: z.string().optional(),
+		unique: z.boolean().optional(),
+	})
+	.passthrough();
 
 export type Validation = z.infer<typeof ValidationSchema>;
 
-export const ConstraintsSchema = z.object({
-	transitions: z.record(z.array(z.string())).optional(),
-	cardinality: z.enum(['single', 'multiple']).optional(),
-}).passthrough();
+export const ConstraintsSchema = z
+	.object({
+		transitions: z.record(z.array(z.string())).optional(),
+		cardinality: z.enum(['single', 'multiple']).optional(),
+	})
+	.passthrough();
 
 export type Constraints = z.infer<typeof ConstraintsSchema>;
 

@@ -1,6 +1,6 @@
 import type { Database } from '@agentsync/db';
-import { instructions, teams, workspaces, schemaTables, schemaFields, roles } from '@agentsync/db';
-import { eq, and } from 'drizzle-orm';
+import { instructions, roles, schemaFields, schemaTables, teams, workspaces } from '@agentsync/db';
+import { and, eq } from 'drizzle-orm';
 
 export async function assembleTeamContext(db: Database, teamId: string): Promise<string> {
 	const [team] = await db.select().from(teams).where(eq(teams.id, teamId));
@@ -94,10 +94,7 @@ export async function assembleWorkspaceContext(
 	return parts.join('\n');
 }
 
-export async function assembleBusinessRules(
-	db: Database,
-	teamId: string,
-): Promise<string> {
+export async function assembleBusinessRules(db: Database, teamId: string): Promise<string> {
 	const ruleInstructions = await db
 		.select()
 		.from(instructions)

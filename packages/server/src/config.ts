@@ -28,9 +28,39 @@ const ConfigSchema = z.object({
 	EMAIL_OTP_EXPIRY_MINUTES: z.coerce.number().int().min(1).default(10),
 	EMAIL_OTP_MAX_ATTEMPTS: z.coerce.number().int().min(1).default(5),
 
-	// Resend (optional; required in production for OTP email delivery)
-	RESEND_API_KEY: z.string().optional(),
+	// Email delivery — pluggable provider (console for dev; resend/smtp/ses for prod)
+	EMAIL_PROVIDER: z.enum(['console', 'resend', 'smtp', 'ses']).default('console'),
 	EMAIL_FROM: z.string().optional(),
+
+	// Resend
+	RESEND_API_KEY: z.string().optional(),
+
+	// SMTP
+	SMTP_HOST: z.string().optional(),
+	SMTP_PORT: z.coerce.number().int().min(1).max(65535).default(587),
+	SMTP_SECURE: z.coerce.boolean().default(false),
+	SMTP_USER: z.string().optional(),
+	SMTP_PASSWORD: z.string().optional(),
+
+	// AWS SES
+	SES_REGION: z.string().default('us-east-1'),
+	SES_ACCESS_KEY_ID: z.string().optional(),
+	SES_SECRET_ACCESS_KEY: z.string().optional(),
+
+	// Self-host bootstrap & access control
+	BOOTSTRAP_ADMIN_EMAIL: z.string().optional(),
+	SIGNUP_ALLOWED_DOMAINS: z.string().optional(),
+
+	// OIDC SSO (Phase 1)
+	OIDC_ISSUER: z.string().optional(),
+	OIDC_CLIENT_ID: z.string().optional(),
+	OIDC_CLIENT_SECRET: z.string().optional(),
+	OIDC_SCOPES: z.string().default('openid email profile'),
+	OIDC_REDIRECT_PATH: z.string().default('/v1/auth/sso/callback'),
+	WEB_BASE_URL: z.string().optional(),
+
+	// Anthropic (optional, powers describe-what-you-track wizard)
+	ANTHROPIC_API_KEY: z.string().optional(),
 
 	// Server
 	PORT: z.coerce.number().default(3000),
@@ -74,12 +104,35 @@ export interface WebhookUrlConfig {
 	blockedCidrs: string[];
 }
 
+export function getAllowedSignupDomains(): string[] {
+	const config = getConfig();
+	if (!config.SIGNUP_ALLOWED_DOMAINS) return [];
+	return config.SIGNUP_ALLOWED_DOMAINS.split(',')
+		.map((d) => d.trim().toLowerCase())
+		.filter((d) => d.length > 0);
+}
+
+export function isEmailDomainAllowed(email: string): boolean {
+	const allowed = getAllowedSignupDomains();
+	if (allowed.length === 0) return true;
+	const domain = email.split('@')[1]?.toLowerCase();
+	if (!domain) return false;
+	return allowed.includes(domain);
+}
+
 export function getWebhookUrlConfig(): WebhookUrlConfig {
 	const config = getConfig();
 	return {
-		allowHttp: config.WEBHOOK_ALLOW_HTTP || config.NODE_ENV === 'development' || config.NODE_ENV === 'test',
-		allowedHosts: config.WEBHOOK_ALLOWED_HOSTS ? config.WEBHOOK_ALLOWED_HOSTS.split(',').map((h) => h.trim()) : [],
-		blockedHosts: config.WEBHOOK_BLOCKED_HOSTS ? config.WEBHOOK_BLOCKED_HOSTS.split(',').map((h) => h.trim()) : [],
-		blockedCidrs: config.WEBHOOK_BLOCKED_CIDRS ? config.WEBHOOK_BLOCKED_CIDRS.split(',').map((c) => c.trim()) : [],
+		allowHttp:
+			config.WEBHOOK_ALLOW_HTTP || config.NODE_ENV === 'development' || config.NODE_ENV === 'test',
+		allowedHosts: config.WEBHOOK_ALLOWED_HOSTS
+			? config.WEBHOOK_ALLOWED_HOSTS.split(',').map((h) => h.trim())
+			: [],
+		blockedHosts: config.WEBHOOK_BLOCKED_HOSTS
+			? config.WEBHOOK_BLOCKED_HOSTS.split(',').map((h) => h.trim())
+			: [],
+		blockedCidrs: config.WEBHOOK_BLOCKED_CIDRS
+			? config.WEBHOOK_BLOCKED_CIDRS.split(',').map((c) => c.trim())
+			: [],
 	};
 }

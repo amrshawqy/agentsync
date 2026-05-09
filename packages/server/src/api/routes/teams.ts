@@ -1,8 +1,8 @@
 import { Hono } from 'hono';
+import { getConfig } from '../../config.js';
 import type { ServiceContainer } from '../../services/index.js';
 import { authMiddleware } from '../middleware/auth.js';
 import { requireAdmin } from '../middleware/route-authz.js';
-import { getConfig } from '../../config.js';
 
 const TEAM_SLUG_REGEX = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const RESERVED_SLUGS = new Set(['admin', 'api', 'support', 'www', 'status', 'help', 'root']);
@@ -43,24 +43,41 @@ export function createTeamRoutes(services: ServiceContainer): Hono {
 
 		const body = await c.req.json();
 		const name = String(body.name ?? '').trim();
-		const slug = String(body.slug ?? '').trim().toLowerCase();
+		const slug = String(body.slug ?? '')
+			.trim()
+			.toLowerCase();
 		if (!name || !slug) {
-			return c.json({ error: { code: 'INVALID_REQUEST', message: 'name and slug are required' } }, 400);
+			return c.json(
+				{ error: { code: 'INVALID_REQUEST', message: 'name and slug are required' } },
+				400,
+			);
 		}
-		if (!TEAM_SLUG_REGEX.test(slug) || slug.length < 3 || slug.length > 32 || RESERVED_SLUGS.has(slug)) {
-			return c.json({ error: { code: 'INVALID_SLUG', message: 'Team slug is invalid or reserved' } }, 400);
+		if (
+			!TEAM_SLUG_REGEX.test(slug) ||
+			slug.length < 3 ||
+			slug.length > 32 ||
+			RESERVED_SLUGS.has(slug)
+		) {
+			return c.json(
+				{ error: { code: 'INVALID_SLUG', message: 'Team slug is invalid or reserved' } },
+				400,
+			);
 		}
 
 		const config = getConfig();
 		if (account.limitsTier !== 'verified') {
 			const membershipCount = await services.account.countMemberships(accountId);
 			if (membershipCount >= config.UNVERIFIED_MAX_TEAMS) {
-				return c.json({
-					error: {
-						code: 'LIMIT_EXCEEDED',
-						message: 'Unverified account reached max team limit. Verify email to unlock higher limits.',
+				return c.json(
+					{
+						error: {
+							code: 'LIMIT_EXCEEDED',
+							message:
+								'Unverified account reached max team limit. Verify email to unlock higher limits.',
+						},
 					},
-				}, 403);
+					403,
+				);
 			}
 		}
 
@@ -73,7 +90,10 @@ export function createTeamRoutes(services: ServiceContainer): Hono {
 		const adminRole = await services.team.getRoleByName(team.id, 'admin');
 		const roleId = adminRole?.id;
 		if (!roleId) {
-			return c.json({ error: { code: 'INTERNAL_ERROR', message: 'Admin role missing on new team' } }, 500);
+			return c.json(
+				{ error: { code: 'INTERNAL_ERROR', message: 'Admin role missing on new team' } },
+				500,
+			);
 		}
 
 		const membershipEmail = account.primaryEmail ?? `${account.id.slice(0, 12)}@agent.local`;
@@ -90,15 +110,18 @@ export function createTeamRoutes(services: ServiceContainer): Hono {
 			agentId: c.get('agentId'),
 		});
 
-		return c.json({
-			success: true,
-			data: {
-				team,
-				membership: { ...membership, status: 'active' },
-				accessToken: teamToken.accessToken,
-				expiresIn: teamToken.expiresIn,
+		return c.json(
+			{
+				success: true,
+				data: {
+					team,
+					membership: { ...membership, status: 'active' },
+					accessToken: teamToken.accessToken,
+					expiresIn: teamToken.expiresIn,
+				},
 			},
-		}, 201);
+			201,
+		);
 	});
 
 	app.post('/:teamId/invites', async (c) => {
@@ -108,7 +131,10 @@ export function createTeamRoutes(services: ServiceContainer): Hono {
 		const teamId = c.req.param('teamId');
 		const currentTeamId = c.get('teamId');
 		if (teamId !== currentTeamId) {
-			return c.json({ error: { code: 'FORBIDDEN', message: 'Cannot create invites for another team' } }, 403);
+			return c.json(
+				{ error: { code: 'FORBIDDEN', message: 'Cannot create invites for another team' } },
+				403,
+			);
 		}
 
 		const body = await c.req.json();

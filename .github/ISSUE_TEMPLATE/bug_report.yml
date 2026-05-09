@@ -1,0 +1,76 @@
+name: Bug report
+description: Something isn't working the way it should.
+title: '[bug] '
+labels: ['bug']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting! Please fill in as much as you can — reproduction steps are the most valuable part.
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: Describe the bug. Include exact error messages where possible.
+      placeholder: 'When I deploy the CRM blueprint, …'
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      description: A minimal sequence we can run.
+      placeholder: |
+        1. Spin up the dev compose
+        2. Run `pnpm db:migrate`
+        3. Hit `POST /v1/blueprints/crm/deploy`
+        4. See error …
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: false
+
+  - type: input
+    id: version
+    attributes:
+      label: AgentSync version
+      description: Tag, commit SHA, or `latest` if running from main.
+      placeholder: 'v0.1.0 / abc1234'
+    validations:
+      required: true
+
+  - type: dropdown
+    id: deployment
+    attributes:
+      label: Deployment
+      options:
+        - Local dev (pnpm dev)
+        - Docker Compose (docker-compose.prod.yml)
+        - Helm / Kubernetes
+        - Other (please describe in "What happened?")
+    validations:
+      required: true
+
+  - type: input
+    id: node
+    attributes:
+      label: Node version
+      placeholder: 'v22.x.x'
+    validations:
+      required: false
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs
+      description: Paste server or web logs. Redact secrets.
+      render: shell
+    validations:
+      required: false

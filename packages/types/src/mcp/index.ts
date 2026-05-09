@@ -7,10 +7,15 @@ export const CreateRecordToolInputSchema = z.object({
 	table: z.string().describe('Table slug to create record in'),
 	data: z.record(z.unknown()).describe('Field values for the new record'),
 	confidence: z.number().min(0).max(1).optional().describe('Confidence score for provenance (0-1)'),
-	links: z.array(z.object({
-		targetRecordId: z.string().uuid(),
-		relationType: z.string(),
-	})).optional().describe('Optional relations to create'),
+	links: z
+		.array(
+			z.object({
+				targetRecordId: z.string().uuid(),
+				relationType: z.string(),
+			}),
+		)
+		.optional()
+		.describe('Optional relations to create'),
 });
 
 export type CreateRecordToolInput = z.infer<typeof CreateRecordToolInputSchema>;
@@ -33,10 +38,14 @@ export type DeleteRecordToolInput = z.infer<typeof DeleteRecordToolInputSchema>;
 export const QueryRecordsToolInputSchema = z.object({
 	table: z.string().describe('Table slug to query'),
 	filters: z.record(z.unknown()).optional().describe('Field filters'),
-	sort: z.array(z.object({
-		field: z.string(),
-		direction: z.enum(['asc', 'desc']).default('asc'),
-	})).optional(),
+	sort: z
+		.array(
+			z.object({
+				field: z.string(),
+				direction: z.enum(['asc', 'desc']).default('asc'),
+			}),
+		)
+		.optional(),
 	limit: z.number().int().min(1).max(100).default(20),
 	offset: z.number().int().min(0).default(0),
 	search: z.string().optional().describe('Full-text search query'),
@@ -156,25 +165,29 @@ export const CreateBlueprintToolInputSchema = z.object({
 	name: z.string(),
 	description: z.string().optional(),
 	category: z.string().optional(),
-	tables: z.array(z.object({
-		slug: z.string(),
-		name: z.string(),
-		description: z.string().optional(),
-		agentHint: z.string().optional(),
-		fields: z.array(z.object({
+	tables: z.array(
+		z.object({
 			slug: z.string(),
 			name: z.string(),
-			fieldType: z.string(),
-			isRequired: z.boolean().optional(),
-			isIndexed: z.boolean().optional(),
-			validation: z.record(z.unknown()).optional(),
-			options: z.array(z.record(z.unknown())).optional(),
-			constraints: z.record(z.unknown()).optional(),
-			relationConfig: z.record(z.unknown()).optional(),
-			rollupConfig: z.record(z.unknown()).optional(),
+			description: z.string().optional(),
 			agentHint: z.string().optional(),
-		})),
-	})),
+			fields: z.array(
+				z.object({
+					slug: z.string(),
+					name: z.string(),
+					fieldType: z.string(),
+					isRequired: z.boolean().optional(),
+					isIndexed: z.boolean().optional(),
+					validation: z.record(z.unknown()).optional(),
+					options: z.array(z.record(z.unknown())).optional(),
+					constraints: z.record(z.unknown()).optional(),
+					relationConfig: z.record(z.unknown()).optional(),
+					rollupConfig: z.record(z.unknown()).optional(),
+					agentHint: z.string().optional(),
+				}),
+			),
+		}),
+	),
 });
 export type CreateBlueprintToolInput = z.infer<typeof CreateBlueprintToolInputSchema>;
 
@@ -190,51 +203,63 @@ export const CreateTableToolInputSchema = z.object({
 	slug: z.string(),
 	description: z.string().optional(),
 	agentHint: z.string().optional(),
-	fields: z.array(z.object({
-		name: z.string(),
-		slug: z.string(),
-		fieldType: z.string(),
-		isRequired: z.boolean().optional(),
-		isIndexed: z.boolean().optional(),
-		validation: z.record(z.unknown()).optional(),
-		options: z.array(z.record(z.unknown())).optional(),
-		constraints: z.record(z.unknown()).optional(),
-		relationConfig: z.record(z.unknown()).optional(),
-		rollupConfig: z.record(z.unknown()).optional(),
-		agentHint: z.string().optional(),
-	})).optional(),
+	fields: z
+		.array(
+			z.object({
+				name: z.string(),
+				slug: z.string(),
+				fieldType: z.string(),
+				isRequired: z.boolean().optional(),
+				isIndexed: z.boolean().optional(),
+				validation: z.record(z.unknown()).optional(),
+				options: z.array(z.record(z.unknown())).optional(),
+				constraints: z.record(z.unknown()).optional(),
+				relationConfig: z.record(z.unknown()).optional(),
+				rollupConfig: z.record(z.unknown()).optional(),
+				agentHint: z.string().optional(),
+			}),
+		)
+		.optional(),
 });
 export type CreateTableToolInput = z.infer<typeof CreateTableToolInputSchema>;
 
 export const AlterTableToolInputSchema = z.object({
 	workspace: z.string().optional().describe('Workspace slug'),
 	table: z.string().describe('Table slug'),
-	addFields: z.array(z.object({
-		name: z.string(),
-		slug: z.string(),
-		fieldType: z.string(),
-		isRequired: z.boolean().optional(),
-		isIndexed: z.boolean().optional(),
-		validation: z.record(z.unknown()).optional(),
-		options: z.array(z.record(z.unknown())).optional(),
-		constraints: z.record(z.unknown()).optional(),
-		relationConfig: z.record(z.unknown()).optional(),
-		rollupConfig: z.record(z.unknown()).optional(),
-		agentHint: z.string().optional(),
-	})).optional(),
+	addFields: z
+		.array(
+			z.object({
+				name: z.string(),
+				slug: z.string(),
+				fieldType: z.string(),
+				isRequired: z.boolean().optional(),
+				isIndexed: z.boolean().optional(),
+				validation: z.record(z.unknown()).optional(),
+				options: z.array(z.record(z.unknown())).optional(),
+				constraints: z.record(z.unknown()).optional(),
+				relationConfig: z.record(z.unknown()).optional(),
+				rollupConfig: z.record(z.unknown()).optional(),
+				agentHint: z.string().optional(),
+			}),
+		)
+		.optional(),
 	removeFields: z.array(z.string()).optional(),
-	updateFields: z.array(z.object({
-		slug: z.string(),
-		name: z.string().optional(),
-		agentHint: z.string().optional(),
-		isRequired: z.boolean().optional(),
-		isIndexed: z.boolean().optional(),
-		validation: z.record(z.unknown()).optional(),
-		options: z.array(z.record(z.unknown())).optional(),
-		constraints: z.record(z.unknown()).optional(),
-		relationConfig: z.record(z.unknown()).optional(),
-		rollupConfig: z.record(z.unknown()).optional(),
-	})).optional(),
+	updateFields: z
+		.array(
+			z.object({
+				slug: z.string(),
+				name: z.string().optional(),
+				agentHint: z.string().optional(),
+				isRequired: z.boolean().optional(),
+				isIndexed: z.boolean().optional(),
+				validation: z.record(z.unknown()).optional(),
+				options: z.array(z.record(z.unknown())).optional(),
+				constraints: z.record(z.unknown()).optional(),
+				relationConfig: z.record(z.unknown()).optional(),
+				rollupConfig: z.record(z.unknown()).optional(),
+			}),
+		)
+		.optional(),
 });
 export type AlterTableToolInput = z.infer<typeof AlterTableToolInputSchema>;
 

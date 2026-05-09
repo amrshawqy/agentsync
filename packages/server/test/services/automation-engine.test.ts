@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { AutomationEngine } from '../../src/services/automation/automation-engine.js';
 
 function createMockDeps() {
@@ -26,31 +26,49 @@ function createMockDeps() {
 describe('AutomationEngine', () => {
 	it('matchesTrigger returns true when event matches', () => {
 		const deps = createMockDeps();
-		const engine = new AutomationEngine(deps.dispatcher, deps.automationService, deps.dataService, deps.eventService);
-
-		const result = engine.matchesTrigger(
-			{ eventType: 'record.created', table: 'contacts' },
-			{ eventType: 'record.created', table: 'contacts', teamId: 'team-1', data: {} } as any,
+		const engine = new AutomationEngine(
+			deps.dispatcher,
+			deps.automationService,
+			deps.dataService,
+			deps.eventService,
 		);
+
+		const result = engine.matchesTrigger({ eventType: 'record.created', table: 'contacts' }, {
+			eventType: 'record.created',
+			table: 'contacts',
+			teamId: 'team-1',
+			data: {},
+		} as any);
 
 		expect(result).toBe(true);
 	});
 
 	it('matchesTrigger returns false on event type mismatch', () => {
 		const deps = createMockDeps();
-		const engine = new AutomationEngine(deps.dispatcher, deps.automationService, deps.dataService, deps.eventService);
-
-		const result = engine.matchesTrigger(
-			{ eventType: 'record.created' },
-			{ eventType: 'record.deleted', teamId: 'team-1', data: {} } as any,
+		const engine = new AutomationEngine(
+			deps.dispatcher,
+			deps.automationService,
+			deps.dataService,
+			deps.eventService,
 		);
+
+		const result = engine.matchesTrigger({ eventType: 'record.created' }, {
+			eventType: 'record.deleted',
+			teamId: 'team-1',
+			data: {},
+		} as any);
 
 		expect(result).toBe(false);
 	});
 
 	it('matchesTrigger checks condition against event data', () => {
 		const deps = createMockDeps();
-		const engine = new AutomationEngine(deps.dispatcher, deps.automationService, deps.dataService, deps.eventService);
+		const engine = new AutomationEngine(
+			deps.dispatcher,
+			deps.automationService,
+			deps.dataService,
+			deps.eventService,
+		);
 
 		const result = engine.matchesTrigger(
 			{ eventType: 'record.created', condition: { status: 'active' } },
@@ -62,14 +80,21 @@ describe('AutomationEngine', () => {
 
 	it('processEvent executes webhook action for matching automation', async () => {
 		const deps = createMockDeps();
-		deps.automationService.list.mockResolvedValue([{
-			id: 'auto-1',
-			isActive: true,
-			trigger: { eventType: 'record.created' },
-			actions: [{ type: 'webhook', url: 'https://example.com/hook' }],
-		}]);
+		deps.automationService.list.mockResolvedValue([
+			{
+				id: 'auto-1',
+				isActive: true,
+				trigger: { eventType: 'record.created' },
+				actions: [{ type: 'webhook', url: 'https://example.com/hook' }],
+			},
+		]);
 
-		const engine = new AutomationEngine(deps.dispatcher, deps.automationService, deps.dataService, deps.eventService);
+		const engine = new AutomationEngine(
+			deps.dispatcher,
+			deps.automationService,
+			deps.dataService,
+			deps.eventService,
+		);
 
 		// Mock fetch globally
 		const mockFetch = vi.fn().mockResolvedValue({ ok: true });
@@ -89,14 +114,21 @@ describe('AutomationEngine', () => {
 
 	it('processEvent executes create_record action', async () => {
 		const deps = createMockDeps();
-		deps.automationService.list.mockResolvedValue([{
-			id: 'auto-1',
-			isActive: true,
-			trigger: { eventType: 'record.created' },
-			actions: [{ type: 'create_record', tableId: 'table-2', data: { note: 'auto-created' } }],
-		}]);
+		deps.automationService.list.mockResolvedValue([
+			{
+				id: 'auto-1',
+				isActive: true,
+				trigger: { eventType: 'record.created' },
+				actions: [{ type: 'create_record', tableId: 'table-2', data: { note: 'auto-created' } }],
+			},
+		]);
 
-		const engine = new AutomationEngine(deps.dispatcher, deps.automationService, deps.dataService, deps.eventService);
+		const engine = new AutomationEngine(
+			deps.dispatcher,
+			deps.automationService,
+			deps.dataService,
+			deps.eventService,
+		);
 
 		await engine.processEvent({
 			eventId: 'evt-1',
@@ -113,14 +145,21 @@ describe('AutomationEngine', () => {
 
 	it('processEvent skips inactive automations', async () => {
 		const deps = createMockDeps();
-		deps.automationService.list.mockResolvedValue([{
-			id: 'auto-1',
-			isActive: false,
-			trigger: { eventType: 'record.created' },
-			actions: [{ type: 'webhook', url: 'https://example.com/hook' }],
-		}]);
+		deps.automationService.list.mockResolvedValue([
+			{
+				id: 'auto-1',
+				isActive: false,
+				trigger: { eventType: 'record.created' },
+				actions: [{ type: 'webhook', url: 'https://example.com/hook' }],
+			},
+		]);
 
-		const engine = new AutomationEngine(deps.dispatcher, deps.automationService, deps.dataService, deps.eventService);
+		const engine = new AutomationEngine(
+			deps.dispatcher,
+			deps.automationService,
+			deps.dataService,
+			deps.eventService,
+		);
 
 		const mockFetch = vi.fn();
 		vi.stubGlobal('fetch', mockFetch);
@@ -139,21 +178,30 @@ describe('AutomationEngine', () => {
 
 	it('handles unknown action type gracefully', async () => {
 		const deps = createMockDeps();
-		deps.automationService.list.mockResolvedValue([{
-			id: 'auto-1',
-			isActive: true,
-			trigger: { eventType: 'record.created' },
-			actions: [{ type: 'unknown_action' }],
-		}]);
+		deps.automationService.list.mockResolvedValue([
+			{
+				id: 'auto-1',
+				isActive: true,
+				trigger: { eventType: 'record.created' },
+				actions: [{ type: 'unknown_action' }],
+			},
+		]);
 
-		const engine = new AutomationEngine(deps.dispatcher, deps.automationService, deps.dataService, deps.eventService);
+		const engine = new AutomationEngine(
+			deps.dispatcher,
+			deps.automationService,
+			deps.dataService,
+			deps.eventService,
+		);
 
 		// Should not throw
-		await expect(engine.processEvent({
-			eventId: 'evt-1',
-			eventType: 'record.created',
-			teamId: 'team-1',
-			data: {},
-		} as any)).resolves.toBeUndefined();
+		await expect(
+			engine.processEvent({
+				eventId: 'evt-1',
+				eventType: 'record.created',
+				teamId: 'team-1',
+				data: {},
+			} as any),
+		).resolves.toBeUndefined();
 	});
 });

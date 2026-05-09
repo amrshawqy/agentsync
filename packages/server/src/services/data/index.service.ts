@@ -1,6 +1,6 @@
-import { eq, and } from 'drizzle-orm';
 import type { Database } from '@agentsync/db';
 import { recordIndexes, schemaFields } from '@agentsync/db';
+import { and, eq } from 'drizzle-orm';
 
 export class IndexService {
 	constructor(private db: Database) {}
@@ -45,7 +45,8 @@ export class IndexService {
 					indexEntry.textValue = value != null ? String(value) : null;
 					break;
 				case 'json':
-					indexEntry.textValue = value != null ? (typeof value === 'string' ? value : JSON.stringify(value)) : null;
+					indexEntry.textValue =
+						value != null ? (typeof value === 'string' ? value : JSON.stringify(value)) : null;
 					break;
 				case 'number':
 				case 'currency':
@@ -81,8 +82,6 @@ export class IndexService {
 
 	async deleteIndexes(recordId: string, tx?: any): Promise<void> {
 		const executor = tx ?? this.db;
-		await executor
-			.delete(recordIndexes)
-			.where(eq(recordIndexes.recordId, recordId));
+		await executor.delete(recordIndexes).where(eq(recordIndexes.recordId, recordId));
 	}
 }

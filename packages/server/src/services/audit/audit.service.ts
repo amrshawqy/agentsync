@@ -1,7 +1,7 @@
-import { eq, and, sql, desc } from 'drizzle-orm';
 import type { Database } from '@agentsync/db';
 import { auditLog } from '@agentsync/db';
 import type { CreateAuditLog, RequestContext } from '@agentsync/types';
+import { and, desc, eq, sql } from 'drizzle-orm';
 
 export class AuditService {
 	constructor(private db: Database) {}

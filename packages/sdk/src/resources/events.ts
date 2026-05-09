@@ -23,6 +23,9 @@ export class EventResource {
 	}
 
 	async list(activeOnly = true): Promise<ApiResponse<EventSubscription[]>> {
-		return this.request<ApiResponse<EventSubscription[]>>('GET', `/v1/events/subscriptions?activeOnly=${activeOnly}`);
+		return this.request<ApiResponse<EventSubscription[]>>(
+			'GET',
+			`/v1/events/subscriptions?activeOnly=${activeOnly}`,
+		);
 	}
 }

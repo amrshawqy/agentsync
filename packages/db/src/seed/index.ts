@@ -1,5 +1,5 @@
 import { createDb } from '../client.js';
-import { teams, roles, users, oauthClients, instructions } from '../schema/index.js';
+import { instructions, oauthClients, roles, teams, users } from '../schema/index.js';
 
 async function seed() {
 	console.log('Seeding database...');
@@ -110,10 +110,7 @@ async function seed() {
 		clientId: 'agentsync-dev-client',
 		clientSecret: 'dev-secret-change-in-production',
 		name: 'AgentSync Dev Client',
-		redirectUris: [
-			'http://localhost:3000/callback',
-			'http://localhost:5173/callback',
-		],
+		redirectUris: ['http://localhost:3000/callback', 'http://localhost:5173/callback'],
 		isConfidential: true,
 	});
 
@@ -123,7 +120,8 @@ async function seed() {
 			teamId: team.id,
 			scope: 'team',
 			instructionType: 'context',
-			content: 'You are an AI agent working within the AgentSync platform. You have access to structured data across workspaces. Always verify data provenance before trusting field values. Use confidence scores when creating or updating records.',
+			content:
+				'You are an AI agent working within the AgentSync platform. You have access to structured data across workspaces. Always verify data provenance before trusting field values. Use confidence scores when creating or updating records.',
 			priority: 10,
 			isActive: true,
 		},
@@ -131,7 +129,8 @@ async function seed() {
 			teamId: team.id,
 			scope: 'team',
 			instructionType: 'guardrail',
-			content: 'Never delete records without explicit user confirmation. Do not modify records owned by other agents unless you have write permission. Always provide a reason when updating record status through state transitions.',
+			content:
+				'Never delete records without explicit user confirmation. Do not modify records owned by other agents unless you have write permission. Always provide a reason when updating record status through state transitions.',
 			priority: 20,
 			isActive: true,
 		},

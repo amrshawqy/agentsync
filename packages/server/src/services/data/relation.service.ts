@@ -1,18 +1,21 @@
-import { eq, and, or, sql } from 'drizzle-orm';
 import type { Database } from '@agentsync/db';
 import { recordRelations, records } from '@agentsync/db';
+import { and, eq, or, sql } from 'drizzle-orm';
 
 export class RelationService {
 	constructor(private db: Database) {}
 
-	async link(params: {
-		teamId: string;
-		sourceRecordId: string;
-		targetRecordId: string;
-		relationType: string;
-		fieldId?: string;
-		createdBy?: string;
-	}, tx?: any) {
+	async link(
+		params: {
+			teamId: string;
+			sourceRecordId: string;
+			targetRecordId: string;
+			relationType: string;
+			fieldId?: string;
+			createdBy?: string;
+		},
+		tx?: any,
+	) {
 		const executor = tx ?? this.db;
 
 		// Enforce tenant ownership for both source and target records.
@@ -100,7 +103,7 @@ export class RelationService {
 		startRecordId: string,
 		path: string[],
 		teamId: string,
-		maxDepth: number = 5,
+		maxDepth = 5,
 	): Promise<any[]> {
 		const [start] = await this.db
 			.select({ id: records.id })

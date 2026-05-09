@@ -1,5 +1,5 @@
 import { createMiddleware } from 'hono/factory';
-import { verifyJwt, type JwtPayload } from '../../services/auth/jwt.js';
+import { type JwtPayload, verifyJwt } from '../../services/auth/jwt.js';
 
 declare module 'hono' {
 	interface ContextVariableMap {

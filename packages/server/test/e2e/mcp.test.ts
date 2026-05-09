@@ -1,6 +1,6 @@
-import { describe, it, expect, vi } from 'vitest';
-import { ProvenanceService } from '../../src/services/data/provenance.service.js';
+import { describe, expect, it, vi } from 'vitest';
 import { AgentKitService } from '../../src/services/agent-kit/agent-kit.service.js';
+import { ProvenanceService } from '../../src/services/data/provenance.service.js';
 
 describe('MCP Tool behaviors', () => {
 	describe('create_record with confidence', () => {
@@ -21,7 +21,11 @@ describe('MCP Tool behaviors', () => {
 	describe('update_record with confidence', () => {
 		it('mergeProvenance passes confidence for updated fields only', () => {
 			const service = new ProvenanceService();
-			const existing = service.buildProvenance({ name: 'John', email: 'j@test.com' }, 'agent-1', 0.9);
+			const existing = service.buildProvenance(
+				{ name: 'John', email: 'j@test.com' },
+				'agent-1',
+				0.9,
+			);
 			const merged = service.mergeProvenance(existing, { email: 'john@new.com' }, 'agent-2', 0.7);
 
 			expect(merged.name.confidence).toBe(0.9); // unchanged
@@ -43,9 +47,9 @@ describe('MCP Tool behaviors', () => {
 			});
 
 			expect(parsed.sort).toHaveLength(2);
-			expect(parsed.sort![0].field).toBe('name');
-			expect(parsed.sort![0].direction).toBe('asc');
-			expect(parsed.sort![1].direction).toBe('desc');
+			expect(parsed.sort?.[0].field).toBe('name');
+			expect(parsed.sort?.[0].direction).toBe('asc');
+			expect(parsed.sort?.[1].direction).toBe('desc');
 		});
 	});
 

@@ -1,15 +1,9 @@
 import crypto from 'node:crypto';
-import { and, eq } from 'drizzle-orm';
 import type { Database } from '@agentsync/db';
-import {
-	accounts,
-	accountRefreshTokens,
-	agentAuthChallenges,
-	agents,
-	users,
-} from '@agentsync/db';
-import { signJwt } from './jwt.js';
+import { accountRefreshTokens, accounts, agentAuthChallenges, agents, users } from '@agentsync/db';
+import { and, eq } from 'drizzle-orm';
 import { getConfig } from '../../config.js';
+import { signJwt } from './jwt.js';
 
 function canonicalize(value: unknown): string {
 	if (Array.isArray(value)) {
@@ -25,13 +19,14 @@ function canonicalize(value: unknown): string {
 }
 
 function computeThumbprint(jwk: Record<string, unknown>): string {
-	return crypto
-		.createHash('sha256')
-		.update(canonicalize(jwk))
-		.digest('base64url');
+	return crypto.createHash('sha256').update(canonicalize(jwk)).digest('base64url');
 }
 
-function verifySignature(jwk: Record<string, unknown>, challenge: string, signature: string): boolean {
+function verifySignature(
+	jwk: Record<string, unknown>,
+	challenge: string,
+	signature: string,
+): boolean {
 	const keyObject = crypto.createPublicKey({ key: jwk, format: 'jwk' });
 	const sig = Buffer.from(signature, 'base64url');
 	const payload = Buffer.from(challenge, 'utf8');
@@ -102,26 +97,17 @@ export class AgentIdentityService {
 		}
 
 		const thumbprint = computeThumbprint(params.publicKeyJwk);
-		let [agent] = await this.db
-			.select()
-			.from(agents)
-			.where(eq(agents.thumbprint, thumbprint));
+		let [agent] = await this.db.select().from(agents).where(eq(agents.thumbprint, thumbprint));
 		let accountId: string;
 
 		if (agent) {
 			accountId = agent.accountId;
-			await this.db
-				.update(agents)
-				.set({ lastSeenAt: new Date() })
-				.where(eq(agents.id, agent.id));
+			await this.db.update(agents).set({ lastSeenAt: new Date() }).where(eq(agents.id, agent.id));
 		} else {
 			if (params.createAccountIfMissing === false) {
 				throw new Error('Agent is not registered');
 			}
-			const [account] = await this.db
-				.insert(accounts)
-				.values({})
-				.returning();
+			const [account] = await this.db.insert(accounts).values({}).returning();
 			accountId = account.id;
 
 			[agent] = await this.db
@@ -150,10 +136,7 @@ export class AgentIdentityService {
 
 	async issueOnboardingTokens(accountId: string, agentId?: string) {
 		const config = getConfig();
-		const [account] = await this.db
-			.select()
-			.from(accounts)
-			.where(eq(accounts.id, accountId));
+		const [account] = await this.db.select().from(accounts).where(eq(accounts.id, accountId));
 		if (!account) {
 			throw new Error('Account not found');
 		}
@@ -170,7 +153,9 @@ export class AgentIdentityService {
 		);
 
 		const refreshToken = crypto.randomBytes(32).toString('hex');
-		const refreshExpiresAt = new Date(Date.now() + this.parseExpiryMs(config.ONBOARDING_REFRESH_EXPIRY));
+		const refreshExpiresAt = new Date(
+			Date.now() + this.parseExpiryMs(config.ONBOARDING_REFRESH_EXPIRY),
+		);
 
 		await this.db.insert(accountRefreshTokens).values({
 			token: refreshToken,
@@ -190,10 +175,7 @@ export class AgentIdentityService {
 			.select()
 			.from(accountRefreshTokens)
 			.where(
-				and(
-					eq(accountRefreshTokens.token, refreshToken),
-					eq(accountRefreshTokens.revoked, false),
-				),
+				and(eq(accountRefreshTokens.token, refreshToken), eq(accountRefreshTokens.revoked, false)),
 			);
 		if (!token) {
 			throw new Error('Invalid refresh token');
@@ -248,16 +230,10 @@ export class AgentIdentityService {
 	}
 
 	async getProfile(accountId: string) {
-		const [account] = await this.db
-			.select()
-			.from(accounts)
-			.where(eq(accounts.id, accountId));
+		const [account] = await this.db.select().from(accounts).where(eq(accounts.id, accountId));
 		if (!account) return null;
 
-		const memberships = await this.db
-			.select()
-			.from(users)
-			.where(eq(users.accountId, accountId));
+		const memberships = await this.db.select().from(users).where(eq(users.accountId, accountId));
 		const linkedAgents = await this.db
 			.select({
 				id: agents.id,
@@ -275,10 +251,10 @@ export class AgentIdentityService {
 
 	private parseExpirySeconds(value: string): number {
 		const normalized = value.trim().toLowerCase();
-		if (normalized.endsWith('m')) return parseInt(normalized.slice(0, -1), 10) * 60;
-		if (normalized.endsWith('h')) return parseInt(normalized.slice(0, -1), 10) * 3600;
-		if (normalized.endsWith('d')) return parseInt(normalized.slice(0, -1), 10) * 86400;
-		return parseInt(normalized, 10);
+		if (normalized.endsWith('m')) return Number.parseInt(normalized.slice(0, -1), 10) * 60;
+		if (normalized.endsWith('h')) return Number.parseInt(normalized.slice(0, -1), 10) * 3600;
+		if (normalized.endsWith('d')) return Number.parseInt(normalized.slice(0, -1), 10) * 86400;
+		return Number.parseInt(normalized, 10);
 	}
 
 	private parseExpiryMs(value: string): number {

@@ -12,10 +12,7 @@ export interface CsvParseOptions {
 /**
  * Parse a CSV string into an array of record objects.
  */
-export function parseCsv(
-	csvContent: string,
-	options?: CsvParseOptions,
-): Record<string, unknown>[] {
+export function parseCsv(csvContent: string, options?: CsvParseOptions): Record<string, unknown>[] {
 	const useHeaders = options?.headers !== false;
 	const delimiter = options?.delimiter ?? ',';
 
@@ -34,7 +31,7 @@ export function parseCsv(
 	return raw.map((row) => {
 		const mapped: Record<string, unknown> = {};
 		for (const [csvCol, value] of Object.entries(row)) {
-			const fieldName = options.fieldMapping![csvCol] ?? csvCol;
+			const fieldName = options.fieldMapping?.[csvCol] ?? csvCol;
 			mapped[fieldName] = value;
 		}
 		return mapped;

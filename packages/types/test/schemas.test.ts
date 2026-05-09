@@ -1,9 +1,9 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
+import { PaginationSchema } from '../src/api/index.js';
+import { BlueprintSchema } from '../src/domain/blueprint.js';
+import { RecordSchema } from '../src/domain/record.js';
 import { TeamSchema } from '../src/domain/team.js';
 import { UserSchema } from '../src/domain/user.js';
-import { RecordSchema } from '../src/domain/record.js';
-import { BlueprintSchema } from '../src/domain/blueprint.js';
-import { PaginationSchema } from '../src/api/index.js';
 import { CreateRecordToolInputSchema } from '../src/mcp/index.js';
 
 describe('TeamSchema', () => {

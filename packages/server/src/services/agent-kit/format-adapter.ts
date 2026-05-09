@@ -38,7 +38,7 @@ export class FormatAdapter {
 			mcpServers: {
 				agentsync: {
 					command: 'http',
-					url: content.connectionConfig.serverUrl + '/mcp',
+					url: `${content.connectionConfig.serverUrl}/mcp`,
 					auth: {
 						type: 'oauth2',
 						clientId: content.connectionConfig.clientId,
@@ -46,9 +46,7 @@ export class FormatAdapter {
 					},
 				},
 			},
-			systemPrompt: [content.identity, content.instructions, content.behavioralRules].join(
-				'\n\n',
-			),
+			systemPrompt: [content.identity, content.instructions, content.behavioralRules].join('\n\n'),
 			skills: content.skills,
 		};
 
@@ -62,7 +60,7 @@ export class FormatAdapter {
 			mcpServers: {
 				agentsync: {
 					type: 'streamable-http' as const,
-					url: content.connectionConfig.serverUrl + '/mcp',
+					url: `${content.connectionConfig.serverUrl}/mcp`,
 				},
 			},
 		};
@@ -80,9 +78,7 @@ export class FormatAdapter {
 			content.behavioralRules,
 			'',
 			'## Skills',
-			...content.skills.map(
-				(s) => `- \`${s.command}\`: ${s.description}`,
-			),
+			...content.skills.map((s) => `- \`${s.command}\`: ${s.description}`),
 		].join('\n');
 
 		return {
@@ -100,9 +96,7 @@ export class FormatAdapter {
 			content.behavioralRules,
 			'',
 			'## Available Skills',
-			...content.skills.map(
-				(s) => `- ${s.command}: ${s.description}`,
-			),
+			...content.skills.map((s) => `- ${s.command}: ${s.description}`),
 			'',
 			`## MCP Server: ${content.connectionConfig.serverUrl}/mcp`,
 		].join('\n');
@@ -115,9 +109,7 @@ export class FormatAdapter {
 	private formatChatGpt(content: KitContent): Record<string, string> {
 		const config = {
 			name: 'AgentSync Assistant',
-			instructions: [content.identity, content.instructions, content.behavioralRules].join(
-				'\n\n',
-			),
+			instructions: [content.identity, content.instructions, content.behavioralRules].join('\n\n'),
 			actions: content.skills.map((s) => ({
 				name: s.command.replace('/', ''),
 				description: s.description,

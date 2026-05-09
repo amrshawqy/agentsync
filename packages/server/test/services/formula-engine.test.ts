@@ -1,8 +1,10 @@
-import { describe, it, expect } from 'vitest';
-import { FormulaEngine } from '../../src/services/data/formula-engine.js';
 import type { SchemaField } from '@agentsync/types';
+import { describe, expect, it } from 'vitest';
+import { FormulaEngine } from '../../src/services/data/formula-engine.js';
 
-function makeField(overrides: Partial<SchemaField> & { slug: string; fieldType: string }): SchemaField {
+function makeField(
+	overrides: Partial<SchemaField> & { slug: string; fieldType: string },
+): SchemaField {
 	return {
 		id: 'field-1',
 		teamId: 'team-1',
@@ -94,7 +96,7 @@ describe('FormulaEngine', () => {
 	});
 
 	it('evaluates ROUND function', () => {
-		const data = { val: 3.14159 };
+		const data = { val: Math.PI };
 		const result = engine.evaluate('ROUND({val}, 2)', { data, fields: [] });
 		expect(result).toBe(3.14);
 	});

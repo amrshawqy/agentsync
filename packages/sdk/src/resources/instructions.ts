@@ -21,7 +21,10 @@ export class InstructionResource {
 		return this.request<ApiResponse<Instruction>>('POST', '/v1/instructions', input);
 	}
 
-	async update(id: string, input: { content?: string; priority?: number; isActive?: boolean }): Promise<ApiResponse<Instruction>> {
+	async update(
+		id: string,
+		input: { content?: string; priority?: number; isActive?: boolean },
+	): Promise<ApiResponse<Instruction>> {
 		return this.request<ApiResponse<Instruction>>('PATCH', `/v1/instructions/${id}`, input);
 	}
 

@@ -1,15 +1,15 @@
-import { eq, and } from 'drizzle-orm';
+import crypto from 'node:crypto';
 import type { Database } from '@agentsync/db';
 import { eventSubscriptions } from '@agentsync/db';
 import type { CreateEventSubscription, EventPayload } from '@agentsync/types';
-import type { EventDispatcher } from './dispatcher.js';
-import type { SSEManager } from './sse-manager.js';
-import type { WebhookSender } from './webhook-sender.js';
-import { matchesAnyPattern, type SubscriptionPattern } from './matcher.js';
-import { validateWebhookUrl } from '../../infra/url-validator.js';
+import { and, eq } from 'drizzle-orm';
 import { getWebhookUrlConfig } from '../../config.js';
 import { logger } from '../../infra/logger.js';
-import crypto from 'node:crypto';
+import { validateWebhookUrl } from '../../infra/url-validator.js';
+import type { EventDispatcher } from './dispatcher.js';
+import { type SubscriptionPattern, matchesAnyPattern } from './matcher.js';
+import type { SSEManager } from './sse-manager.js';
+import type { WebhookSender } from './webhook-sender.js';
 
 export class EventService {
 	constructor(
@@ -47,18 +47,13 @@ export class EventService {
 		const result = await this.db
 			.update(eventSubscriptions)
 			.set({ isActive: false })
-			.where(
-				and(
-					eq(eventSubscriptions.id, subscriptionId),
-					eq(eventSubscriptions.teamId, teamId),
-				),
-			)
+			.where(and(eq(eventSubscriptions.id, subscriptionId), eq(eventSubscriptions.teamId, teamId)))
 			.returning();
 
 		return result.length > 0;
 	}
 
-	async listSubscriptions(teamId: string, userId: string, activeOnly: boolean = true) {
+	async listSubscriptions(teamId: string, userId: string, activeOnly = true) {
 		const conditions = [
 			eq(eventSubscriptions.teamId, teamId),
 			eq(eventSubscriptions.userId, userId),
@@ -158,9 +153,7 @@ export class EventService {
 			if (sub.condition && event.data) {
 				const cond = sub.condition as Record<string, unknown>;
 				const data = event.data as Record<string, unknown>;
-				const conditionMatches = Object.entries(cond).every(
-					([key, value]) => data[key] === value,
-				);
+				const conditionMatches = Object.entries(cond).every(([key, value]) => data[key] === value);
 				if (!conditionMatches) continue;
 			}
 

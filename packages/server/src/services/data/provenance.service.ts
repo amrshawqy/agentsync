@@ -4,7 +4,7 @@ export class ProvenanceService {
 	buildProvenance(
 		data: Record<string, unknown>,
 		agentId: string,
-		confidence: number = 1.0,
+		confidence = 1.0,
 	): Record<string, ProvenanceEntry> {
 		const now = new Date().toISOString();
 		const provenance: Record<string, ProvenanceEntry> = {};
@@ -24,7 +24,7 @@ export class ProvenanceService {
 		existing: Record<string, ProvenanceEntry>,
 		updates: Record<string, unknown>,
 		agentId: string,
-		confidence: number = 1.0,
+		confidence = 1.0,
 	): Record<string, ProvenanceEntry> {
 		const now = new Date().toISOString();
 		const merged = { ...existing };

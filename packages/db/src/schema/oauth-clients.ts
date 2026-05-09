@@ -1,4 +1,4 @@
-import { pgTable, uuid, varchar, text, boolean, timestamp } from 'drizzle-orm/pg-core';
+import { boolean, pgTable, text, timestamp, uuid, varchar } from 'drizzle-orm/pg-core';
 import { teams } from './teams.js';
 
 export const oauthClients = pgTable('oauth_clients', {

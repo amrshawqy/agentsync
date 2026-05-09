@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { EventType, CallbackType } from '../enums.js';
+import { CallbackType, EventType } from '../enums.js';
 
 export const EventSubscriptionSchema = z.object({
 	id: z.string().uuid(),

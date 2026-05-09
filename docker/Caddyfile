@@ -1,0 +1,12 @@
+{$DOMAIN} {
+	# OIDC discovery + OAuth + MCP go to the API server.
+	@api {
+		path /v1/* /oauth/* /mcp /health /.well-known/oauth-protected-resource /.well-known/oauth-authorization-server
+	}
+	reverse_proxy @api server:3000
+
+	# Everything else is the web UI.
+	reverse_proxy web:3001
+
+	encode zstd gzip
+}

@@ -22,15 +22,12 @@ export const errorHandler: ErrorHandler = (err, c) => {
 	}
 
 	if (
-		err.message.includes('Permission denied')
-		|| err.message.includes('FORBIDDEN')
-		|| err.message.includes('Forbidden')
+		err.message.includes('Permission denied') ||
+		err.message.includes('FORBIDDEN') ||
+		err.message.includes('Forbidden')
 	) {
 		return c.json({ error: { code: 'FORBIDDEN', message: err.message } }, 403);
 	}
 
-	return c.json(
-		{ error: { code: 'INTERNAL_ERROR', message: 'Internal server error' } },
-		500,
-	);
+	return c.json({ error: { code: 'INTERNAL_ERROR', message: 'Internal server error' } }, 500);
 };

@@ -1,6 +1,6 @@
-import { describe, it, expect } from 'vitest';
-import { isPrivateIp, validateWebhookUrl, SsrfError } from '../../src/infra/url-validator.js';
+import { describe, expect, it } from 'vitest';
 import type { WebhookUrlConfig } from '../../src/config.js';
+import { SsrfError, isPrivateIp, validateWebhookUrl } from '../../src/infra/url-validator.js';
 
 const defaultConfig: WebhookUrlConfig = {
 	allowHttp: true,
@@ -104,49 +104,47 @@ describe('validateWebhookUrl', () => {
 	});
 
 	it('rejects invalid URLs', async () => {
-		await expect(
-			validateWebhookUrl('not-a-url', defaultConfig),
-		).rejects.toThrow(SsrfError);
+		await expect(validateWebhookUrl('not-a-url', defaultConfig)).rejects.toThrow(SsrfError);
 	});
 
 	it('rejects non-http protocols', async () => {
-		await expect(
-			validateWebhookUrl('ftp://example.com/file', defaultConfig),
-		).rejects.toThrow(SsrfError);
+		await expect(validateWebhookUrl('ftp://example.com/file', defaultConfig)).rejects.toThrow(
+			SsrfError,
+		);
 
-		await expect(
-			validateWebhookUrl('file:///etc/passwd', defaultConfig),
-		).rejects.toThrow(SsrfError);
+		await expect(validateWebhookUrl('file:///etc/passwd', defaultConfig)).rejects.toThrow(
+			SsrfError,
+		);
 	});
 
 	it('rejects localhost', async () => {
-		await expect(
-			validateWebhookUrl('http://localhost:8080/hook', defaultConfig),
-		).rejects.toThrow(SsrfError);
+		await expect(validateWebhookUrl('http://localhost:8080/hook', defaultConfig)).rejects.toThrow(
+			SsrfError,
+		);
 	});
 
 	it('rejects 127.0.0.1', async () => {
-		await expect(
-			validateWebhookUrl('http://127.0.0.1:8080/hook', defaultConfig),
-		).rejects.toThrow(SsrfError);
+		await expect(validateWebhookUrl('http://127.0.0.1:8080/hook', defaultConfig)).rejects.toThrow(
+			SsrfError,
+		);
 	});
 
 	it('rejects private IPs (10.x)', async () => {
-		await expect(
-			validateWebhookUrl('http://10.0.0.5/hook', defaultConfig),
-		).rejects.toThrow(SsrfError);
+		await expect(validateWebhookUrl('http://10.0.0.5/hook', defaultConfig)).rejects.toThrow(
+			SsrfError,
+		);
 	});
 
 	it('rejects private IPs (172.16.x)', async () => {
-		await expect(
-			validateWebhookUrl('http://172.16.0.1/hook', defaultConfig),
-		).rejects.toThrow(SsrfError);
+		await expect(validateWebhookUrl('http://172.16.0.1/hook', defaultConfig)).rejects.toThrow(
+			SsrfError,
+		);
 	});
 
 	it('rejects private IPs (192.168.x)', async () => {
-		await expect(
-			validateWebhookUrl('http://192.168.1.1/hook', defaultConfig),
-		).rejects.toThrow(SsrfError);
+		await expect(validateWebhookUrl('http://192.168.1.1/hook', defaultConfig)).rejects.toThrow(
+			SsrfError,
+		);
 	});
 
 	it('rejects AWS/GCP metadata endpoint', async () => {
@@ -168,16 +166,14 @@ describe('validateWebhookUrl', () => {
 			validateWebhookUrl('https://hooks.myapp.com/webhook', config),
 		).resolves.not.toThrow();
 
-		await expect(
-			validateWebhookUrl('https://evil.com/webhook', config),
-		).rejects.toThrow(SsrfError);
+		await expect(validateWebhookUrl('https://evil.com/webhook', config)).rejects.toThrow(SsrfError);
 	});
 
 	it('respects custom blockedHosts', async () => {
 		const config = { ...defaultConfig, blockedHosts: ['evil.example.com'] };
 
-		await expect(
-			validateWebhookUrl('https://evil.example.com/hook', config),
-		).rejects.toThrow(SsrfError);
+		await expect(validateWebhookUrl('https://evil.example.com/hook', config)).rejects.toThrow(
+			SsrfError,
+		);
 	});
 });

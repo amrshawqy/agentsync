@@ -1,15 +1,15 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { DataService } from '../../src/services/data/data.service.js';
 import { ProvenanceService } from '../../src/services/data/provenance.service.js';
 import {
-	createMockDb,
-	createMockSchemaService,
-	createMockPermissionService,
-	createMockConstraintService,
-	createMockEventService,
 	createMockAuditService,
+	createMockConstraintService,
+	createMockDb,
+	createMockEventService,
 	createMockIndexService,
+	createMockPermissionService,
 	createMockRelationService,
+	createMockSchemaService,
 	createMockSearchService,
 	createTestContext,
 } from './setup.js';
@@ -110,11 +110,7 @@ describe('DataService Integration', () => {
 				confidence: 0.6,
 			});
 
-			expect(buildSpy).toHaveBeenCalledWith(
-				{ name: 'Maybe John' },
-				'user-1',
-				0.6,
-			);
+			expect(buildSpy).toHaveBeenCalledWith({ name: 'Maybe John' }, 'user-1', 0.6);
 		});
 
 		it('throws on permission denied', async () => {
@@ -134,9 +130,9 @@ describe('DataService Integration', () => {
 				{ code: 'REQUIRED_FIELD_MISSING', field: 'email', message: 'email is required' },
 			]);
 
-			await expect(
-				service.createRecord(ctx, { tableId: 'table-1', data: {} }),
-			).rejects.toThrow('Validation failed');
+			await expect(service.createRecord(ctx, { tableId: 'table-1', data: {} })).rejects.toThrow(
+				'Validation failed',
+			);
 		});
 	});
 
@@ -147,7 +143,10 @@ describe('DataService Integration', () => {
 				teamId: 'team-1',
 				tableId: 'table-1',
 				data: { name: 'John', ssn: '123-45-6789' },
-				provenance: { name: { agent: 'a', at: 'now', confidence: 1 }, ssn: { agent: 'a', at: 'now', confidence: 1 } },
+				provenance: {
+					name: { agent: 'a', at: 'now', confidence: 1 },
+					ssn: { agent: 'a', at: 'now', confidence: 1 },
+				},
 			};
 
 			// Mock getRecord DB select
@@ -167,9 +166,9 @@ describe('DataService Integration', () => {
 			const result = await service.getRecord(ctx, 'rec-1');
 
 			expect(result).not.toBeNull();
-			expect((result!.data as any).name).toBe('John');
-			expect((result!.data as any).ssn).toBeUndefined();
-			expect((result!.provenance as any).ssn).toBeUndefined();
+			expect((result?.data as any).name).toBe('John');
+			expect((result?.data as any).ssn).toBeUndefined();
+			expect((result?.provenance as any).ssn).toBeUndefined();
 		});
 	});
 
@@ -199,12 +198,7 @@ describe('DataService Integration', () => {
 				confidence: 0.8,
 			});
 
-			expect(mergeSpy).toHaveBeenCalledWith(
-				existing.provenance,
-				{ name: 'Jane' },
-				'user-1',
-				0.8,
-			);
+			expect(mergeSpy).toHaveBeenCalledWith(existing.provenance, { name: 'Jane' }, 'user-1', 0.8);
 			expect(eventService.emit).toHaveBeenCalledWith(
 				expect.objectContaining({
 					eventType: 'record.updated',
@@ -275,11 +269,7 @@ describe('DataService Integration', () => {
 				return fn(txDb);
 			});
 
-			await service.bulkImport(ctx, 'table-1', [
-				{ name: 'A' },
-				{ name: 'B' },
-				{ name: 'C' },
-			]);
+			await service.bulkImport(ctx, 'table-1', [{ name: 'A' }, { name: 'B' }, { name: 'C' }]);
 
 			// Should emit record.created for each record
 			expect(eventService.emit).toHaveBeenCalledTimes(3);

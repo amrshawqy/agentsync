@@ -25,3 +25,5 @@ export { automations } from './automations.js';
 export { teamInvites } from './team-invites.js';
 export { emailOtpChallenges } from './email-otp-challenges.js';
 export { agentAuthChallenges } from './agent-auth-challenges.js';
+export { setupTokens } from './setup-tokens.js';
+export { recordRevisions } from './record-revisions.js';

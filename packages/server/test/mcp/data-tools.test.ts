@@ -1,11 +1,11 @@
-import { describe, it, expect, beforeAll } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
 import { registerTools } from '../../src/mcp/tools/index.js';
 import {
+	createAuthContextGetter,
 	createMockMcpServer,
 	createMockServiceContainer,
-	createAuthContextGetter,
-	getResultText,
 	getResultJson,
+	getResultText,
 } from './setup.js';
 
 describe('MCP Data Tools', () => {
@@ -76,7 +76,11 @@ describe('MCP Data Tools', () => {
 			});
 
 			expect(services.schema.getWorkspaceBySlug).toHaveBeenCalledWith('team-test-1', 'crm');
-			expect(services.schema.getTableBySlug).toHaveBeenCalledWith('team-test-1', 'ws-1', 'contacts');
+			expect(services.schema.getTableBySlug).toHaveBeenCalledWith(
+				'team-test-1',
+				'ws-1',
+				'contacts',
+			);
 		});
 	});
 
@@ -292,7 +296,12 @@ describe('MCP Data Tools', () => {
 
 			expect(result.isError).toBeFalsy();
 			expect(getResultText(result)).toBe('Unlinked.');
-			expect(services.relation.unlink).toHaveBeenCalledWith('team-test-1', sourceId, targetId, 'company');
+			expect(services.relation.unlink).toHaveBeenCalledWith(
+				'team-test-1',
+				sourceId,
+				targetId,
+				'company',
+			);
 			expect(services.event.emit).toHaveBeenCalledWith(
 				expect.objectContaining({
 					eventType: 'relation.removed',

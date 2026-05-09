@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { SearchService } from '../../src/services/data/search.service.js';
 
 function createMockDb(results: any[] = []) {
@@ -72,9 +72,7 @@ describe('SearchService', () => {
 	});
 
 	it('fullTextSearch returns full record objects', async () => {
-		const mockRecords = [
-			{ id: 'rec-1', data: { name: 'Test Record' } },
-		];
+		const mockRecords = [{ id: 'rec-1', data: { name: 'Test Record' } }];
 		const db = createMockDb(mockRecords);
 		const service = new SearchService(db);
 

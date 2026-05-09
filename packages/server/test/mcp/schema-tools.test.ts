@@ -1,11 +1,11 @@
-import { describe, it, expect, beforeAll } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
 import { registerTools } from '../../src/mcp/tools/index.js';
 import {
+	createAuthContextGetter,
 	createMockMcpServer,
 	createMockServiceContainer,
-	createAuthContextGetter,
-	getResultText,
 	getResultJson,
+	getResultText,
 } from './setup.js';
 
 describe('MCP Schema Tools', () => {
@@ -54,7 +54,11 @@ describe('MCP Schema Tools', () => {
 			await mcp.invokeTool('describe_table', { table: 'contacts', workspace: 'crm' });
 
 			expect(services.schema.getWorkspaceBySlug).toHaveBeenCalledWith('team-test-1', 'crm');
-			expect(services.schema.getTableBySlug).toHaveBeenCalledWith('team-test-1', 'ws-1', 'contacts');
+			expect(services.schema.getTableBySlug).toHaveBeenCalledWith(
+				'team-test-1',
+				'ws-1',
+				'contacts',
+			);
 		});
 	});
 

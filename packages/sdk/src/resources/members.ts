@@ -1,4 +1,4 @@
-import type { ApiResponse, User, Role } from '@agentsync/types';
+import type { ApiResponse, Role, User } from '@agentsync/types';
 
 export class MemberResource {
 	constructor(private request: <T>(method: string, path: string, body?: unknown) => Promise<T>) {}
@@ -11,11 +11,16 @@ export class MemberResource {
 		return this.request<ApiResponse<User>>('GET', `/v1/members/${id}`);
 	}
 
-	async create(input: { email: string; name?: string; roleId?: string }): Promise<ApiResponse<User>> {
+	async create(input: { email: string; name?: string; roleId?: string }): Promise<
+		ApiResponse<User>
+	> {
 		return this.request<ApiResponse<User>>('POST', '/v1/members', input);
 	}
 
-	async update(id: string, input: { name?: string; roleId?: string; status?: string }): Promise<ApiResponse<User>> {
+	async update(
+		id: string,
+		input: { name?: string; roleId?: string; status?: string },
+	): Promise<ApiResponse<User>> {
 		return this.request<ApiResponse<User>>('PATCH', `/v1/members/${id}`, input);
 	}
 

@@ -1,6 +1,6 @@
-import { createMiddleware } from 'hono/factory';
-import { sql } from 'drizzle-orm';
 import type { Database } from '@agentsync/db';
+import { sql } from 'drizzle-orm';
+import { createMiddleware } from 'hono/factory';
 
 /**
  * Middleware that sets `app.current_team_id` on the Postgres session
@@ -13,9 +13,7 @@ export function createTeamContextMiddleware(db: Database) {
 		const teamId: string | undefined = c.get('teamId');
 
 		if (teamId) {
-			await db.execute(
-				sql`SELECT set_config('app.current_team_id', ${teamId}, false)`,
-			);
+			await db.execute(sql`SELECT set_config('app.current_team_id', ${teamId}, false)`);
 		}
 
 		try {

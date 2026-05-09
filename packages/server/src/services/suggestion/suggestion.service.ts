@@ -1,7 +1,7 @@
-import { eq, and } from 'drizzle-orm';
 import type { Database } from '@agentsync/db';
 import { fieldSuggestions } from '@agentsync/db';
 import type { CreateFieldSuggestion } from '@agentsync/types';
+import { and, eq } from 'drizzle-orm';
 import type { SchemaService } from '../schema/schema.service.js';
 
 export class SuggestionService {
@@ -70,9 +70,7 @@ export class SuggestionService {
 				reviewNote: note,
 				reviewedAt: new Date(),
 			})
-			.where(
-				and(eq(fieldSuggestions.id, suggestionId), eq(fieldSuggestions.teamId, teamId)),
-			)
+			.where(and(eq(fieldSuggestions.id, suggestionId), eq(fieldSuggestions.teamId, teamId)))
 			.returning();
 
 		return updated ?? null;
@@ -82,9 +80,7 @@ export class SuggestionService {
 		return this.db
 			.select()
 			.from(fieldSuggestions)
-			.where(
-				and(eq(fieldSuggestions.teamId, teamId), eq(fieldSuggestions.status, 'pending')),
-			);
+			.where(and(eq(fieldSuggestions.teamId, teamId), eq(fieldSuggestions.status, 'pending')));
 	}
 
 	async listPendingByUser(teamId: string, userId: string) {
@@ -101,21 +97,13 @@ export class SuggestionService {
 	}
 
 	async listAll(teamId: string) {
-		return this.db
-			.select()
-			.from(fieldSuggestions)
-			.where(eq(fieldSuggestions.teamId, teamId));
+		return this.db.select().from(fieldSuggestions).where(eq(fieldSuggestions.teamId, teamId));
 	}
 
 	async listByUser(teamId: string, userId: string) {
 		return this.db
 			.select()
 			.from(fieldSuggestions)
-			.where(
-				and(
-					eq(fieldSuggestions.teamId, teamId),
-					eq(fieldSuggestions.suggestedBy, userId),
-				),
-			);
+			.where(and(eq(fieldSuggestions.teamId, teamId), eq(fieldSuggestions.suggestedBy, userId)));
 	}
 }

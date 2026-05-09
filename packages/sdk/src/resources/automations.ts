@@ -18,6 +18,10 @@ export class AutomationResource {
 	}
 
 	async toggle(automationId: string, active: boolean): Promise<ApiResponse<Automation>> {
-		return this.request<ApiResponse<Automation>>('PATCH', `/v1/automations/${automationId}/toggle`, { active });
+		return this.request<ApiResponse<Automation>>(
+			'PATCH',
+			`/v1/automations/${automationId}/toggle`,
+			{ active },
+		);
 	}
 }

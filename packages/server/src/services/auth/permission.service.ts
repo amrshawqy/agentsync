@@ -1,8 +1,8 @@
-import { eq } from 'drizzle-orm';
 import type { Database } from '@agentsync/db';
 import { roles, users } from '@agentsync/db';
 import type { PermissionAction } from '@agentsync/types';
 import type { PermissionEvaluation } from '@agentsync/types';
+import { eq } from 'drizzle-orm';
 import type { CacheService } from '../cache/cache.service.js';
 
 export class PermissionService {
@@ -26,20 +26,14 @@ export class PermissionService {
 		const cached = await this.cache.get<PermissionEvaluation>(cacheKey);
 		if (cached && !params.recordOwnerId) return cached;
 
-		const [user] = await this.db
-			.select()
-			.from(users)
-			.where(eq(users.id, params.userId));
+		const [user] = await this.db.select().from(users).where(eq(users.id, params.userId));
 
 		if (!user || user.status !== 'active' || user.teamId !== params.teamId) {
 			return { allowed: false, layer: 1, reason: 'User not active in team' };
 		}
 
 		// Get role permissions
-		const [role] = await this.db
-			.select()
-			.from(roles)
-			.where(eq(roles.id, params.roleId));
+		const [role] = await this.db.select().from(roles).where(eq(roles.id, params.roleId));
 
 		if (!role) {
 			return { allowed: false, layer: 1, reason: 'Role not found' };
@@ -126,9 +120,9 @@ export class PermissionService {
 		if (!writeFilter) return null;
 
 		const variableMap: Record<string, string> = {
-			'$current_user': params.userId,
-			'$current_team': params.teamId,
-			'$current_role': params.roleId,
+			$current_user: params.userId,
+			$current_team: params.teamId,
+			$current_role: params.roleId,
 		};
 
 		for (const [field, expectedValue] of Object.entries(writeFilter)) {

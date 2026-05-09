@@ -1,5 +1,5 @@
-import archiver from 'archiver';
 import { Writable } from 'node:stream';
+import archiver from 'archiver';
 
 export class Packager {
 	async packageAsZip(files: Record<string, string>): Promise<Buffer> {

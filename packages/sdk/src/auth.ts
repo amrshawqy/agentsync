@@ -1,4 +1,4 @@
-import { randomBytes, createHash } from 'node:crypto';
+import { createHash, randomBytes } from 'node:crypto';
 
 export interface OAuthConfig {
 	serverUrl: string;
@@ -31,9 +31,7 @@ export class OAuthHelper {
 
 	generatePKCE(): { verifier: string; challenge: string } {
 		const verifier = randomBytes(32).toString('base64url');
-		const challenge = createHash('sha256')
-			.update(verifier)
-			.digest('base64url');
+		const challenge = createHash('sha256').update(verifier).digest('base64url');
 		return { verifier, challenge };
 	}
 
@@ -71,7 +69,7 @@ export class OAuthHelper {
 			throw new Error(`Token exchange failed: ${response.status}`);
 		}
 
-		const data = await response.json() as any;
+		const data = (await response.json()) as any;
 		this.tokenSet = {
 			accessToken: data.access_token,
 			refreshToken: data.refresh_token,
@@ -95,7 +93,7 @@ export class OAuthHelper {
 			throw new Error(`Device authorization failed: ${response.status}`);
 		}
 
-		const data = await response.json() as any;
+		const data = (await response.json()) as any;
 		return {
 			deviceCode: data.device_code,
 			userCode: data.user_code,
@@ -105,7 +103,11 @@ export class OAuthHelper {
 		};
 	}
 
-	async pollDeviceToken(deviceCode: string, intervalSeconds = 5, timeoutMs = 5 * 60_000): Promise<TokenSet> {
+	async pollDeviceToken(
+		deviceCode: string,
+		intervalSeconds = 5,
+		timeoutMs = 5 * 60_000,
+	): Promise<TokenSet> {
 		const deadline = Date.now() + timeoutMs;
 
 		while (Date.now() < deadline) {
@@ -120,7 +122,7 @@ export class OAuthHelper {
 			});
 
 			if (response.ok) {
-				const data = await response.json() as any;
+				const data = (await response.json()) as any;
 				this.tokenSet = {
 					accessToken: data.access_token,
 					refreshToken: data.refresh_token,
@@ -130,7 +132,10 @@ export class OAuthHelper {
 			}
 
 			const body = await response.json().catch(() => ({}));
-			if (body?.error === 'invalid_grant' && String(body?.error_description ?? '').includes('authorization_pending')) {
+			if (
+				body?.error === 'invalid_grant' &&
+				String(body?.error_description ?? '').includes('authorization_pending')
+			) {
 				await new Promise((resolve) => setTimeout(resolve, intervalSeconds * 1000));
 				continue;
 			}
@@ -160,7 +165,7 @@ export class OAuthHelper {
 			throw new Error(`Token refresh failed: ${response.status}`);
 		}
 
-		const data = await response.json() as any;
+		const data = (await response.json()) as any;
 		this.tokenSet = {
 			accessToken: data.access_token,
 			refreshToken: data.refresh_token,
@@ -177,7 +182,7 @@ export class OAuthHelper {
 			await this.refreshToken();
 		}
 
-		return this.tokenSet!.accessToken;
+		return this.tokenSet?.accessToken;
 	}
 
 	setTokens(tokenSet: TokenSet): void {

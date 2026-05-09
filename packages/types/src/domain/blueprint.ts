@@ -1,25 +1,29 @@
 import { z } from 'zod';
 
 export const BlueprintSchemaDefinitionSchema = z.object({
-	tables: z.array(z.object({
-		slug: z.string(),
-		name: z.string(),
-		description: z.string().optional(),
-		agentHint: z.string().optional(),
-		fields: z.array(z.object({
+	tables: z.array(
+		z.object({
 			slug: z.string(),
 			name: z.string(),
-			fieldType: z.string(),
-			isRequired: z.boolean().optional(),
-			isIndexed: z.boolean().optional(),
-			validation: z.record(z.unknown()).optional(),
-			options: z.array(z.record(z.unknown())).optional(),
-			constraints: z.record(z.unknown()).optional(),
-			relationConfig: z.record(z.unknown()).optional(),
-			rollupConfig: z.record(z.unknown()).optional(),
+			description: z.string().optional(),
 			agentHint: z.string().optional(),
-		})),
-	})),
+			fields: z.array(
+				z.object({
+					slug: z.string(),
+					name: z.string(),
+					fieldType: z.string(),
+					isRequired: z.boolean().optional(),
+					isIndexed: z.boolean().optional(),
+					validation: z.record(z.unknown()).optional(),
+					options: z.array(z.record(z.unknown())).optional(),
+					constraints: z.record(z.unknown()).optional(),
+					relationConfig: z.record(z.unknown()).optional(),
+					rollupConfig: z.record(z.unknown()).optional(),
+					agentHint: z.string().optional(),
+				}),
+			),
+		}),
+	),
 });
 
 export type BlueprintSchemaDefinition = z.infer<typeof BlueprintSchemaDefinitionSchema>;

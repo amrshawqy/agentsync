@@ -1,6 +1,6 @@
-import { describe, it, expect } from 'vitest';
+import type { SchemaField, SchemaTable } from '@agentsync/types';
+import { describe, expect, it } from 'vitest';
 import { resolveSchemaLayers } from '../../src/services/schema/layer-resolver.js';
-import type { SchemaTable, SchemaField } from '@agentsync/types';
 
 function makeTable(slug: string, overrides: Partial<SchemaTable> = {}): SchemaTable {
 	return {
@@ -66,7 +66,10 @@ describe('resolveSchemaLayers', () => {
 			{ table: makeTable('contacts'), fields: [makeField('name', 'table-contacts', 0)] },
 		];
 		const blueprint = [
-			{ table: makeTable('deals', { sourceLayer: 'blueprint' }), fields: [makeField('amount', 'table-deals', 0)] },
+			{
+				table: makeTable('deals', { sourceLayer: 'blueprint' }),
+				fields: [makeField('amount', 'table-deals', 0)],
+			},
 		];
 
 		const result = resolveSchemaLayers(core, blueprint, []);
@@ -87,7 +90,12 @@ describe('resolveSchemaLayers', () => {
 		const blueprint = [
 			{
 				table: makeTable('contacts', { sourceLayer: 'blueprint' }),
-				fields: [makeField('name', 'table-contacts', 0, { agentHint: 'blueprint hint', sourceLayer: 'blueprint' })],
+				fields: [
+					makeField('name', 'table-contacts', 0, {
+						agentHint: 'blueprint hint',
+						sourceLayer: 'blueprint',
+					}),
+				],
 			},
 		];
 
@@ -107,7 +115,12 @@ describe('resolveSchemaLayers', () => {
 		const workspace = [
 			{
 				table: makeTable('contacts', { sourceLayer: 'workspace' }),
-				fields: [makeField('name', 'table-contacts', 0, { agentHint: 'workspace hint', sourceLayer: 'workspace' })],
+				fields: [
+					makeField('name', 'table-contacts', 0, {
+						agentHint: 'workspace hint',
+						sourceLayer: 'workspace',
+					}),
+				],
 			},
 		];
 
@@ -147,18 +160,13 @@ describe('resolveSchemaLayers', () => {
 		const core = [
 			{
 				table: makeTable('contacts'),
-				fields: [
-					makeField('name', 'table-contacts', 2),
-					makeField('email', 'table-contacts', 0),
-				],
+				fields: [makeField('name', 'table-contacts', 2), makeField('email', 'table-contacts', 0)],
 			},
 		];
 		const blueprint = [
 			{
 				table: makeTable('contacts', { sourceLayer: 'blueprint' }),
-				fields: [
-					makeField('phone', 'table-contacts', 1),
-				],
+				fields: [makeField('phone', 'table-contacts', 1)],
 			},
 		];
 

@@ -1,11 +1,11 @@
-import { describe, it, expect, beforeAll } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
 import { registerTools } from '../../src/mcp/tools/index.js';
 import {
+	createAuthContextGetter,
 	createMockMcpServer,
 	createMockServiceContainer,
-	createAuthContextGetter,
-	getResultText,
 	getResultJson,
+	getResultText,
 } from './setup.js';
 
 describe('Member & Permission MCP tools', () => {
@@ -161,12 +161,10 @@ describe('Member & Permission MCP tools', () => {
 			const json = getResultJson(result) as any;
 
 			expect(json).toMatchObject({ id: roleId });
-			expect(services.team.updateRoleFieldAccess).toHaveBeenCalledWith(
-				roleId,
-				'crm',
-				'contacts',
-				{ hidden: ['ssn', 'internal_notes'], readOnly: ['email', 'created_at'] },
-			);
+			expect(services.team.updateRoleFieldAccess).toHaveBeenCalledWith(roleId, 'crm', 'contacts', {
+				hidden: ['ssn', 'internal_notes'],
+				readOnly: ['email', 'created_at'],
+			});
 		});
 
 		it('should set only hidden fields without readOnly', async () => {
@@ -181,12 +179,10 @@ describe('Member & Permission MCP tools', () => {
 			});
 
 			expect(result.isError).toBeUndefined();
-			expect(services.team.updateRoleFieldAccess).toHaveBeenCalledWith(
-				roleId,
-				'crm',
-				'contacts',
-				{ hidden: ['ssn'], readOnly: undefined },
-			);
+			expect(services.team.updateRoleFieldAccess).toHaveBeenCalledWith(roleId, 'crm', 'contacts', {
+				hidden: ['ssn'],
+				readOnly: undefined,
+			});
 		});
 	});
 });

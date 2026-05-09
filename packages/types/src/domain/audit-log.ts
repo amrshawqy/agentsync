@@ -11,10 +11,14 @@ export const AuditLogSchema = z.object({
 	resourceId: z.string().uuid().nullable(),
 	tableId: z.string().uuid().nullable(),
 	reason: z.string().nullable(),
-	changes: z.record(z.object({
-		old: z.unknown(),
-		new: z.unknown(),
-	})).nullable(),
+	changes: z
+		.record(
+			z.object({
+				old: z.unknown(),
+				new: z.unknown(),
+			}),
+		)
+		.nullable(),
 	provenance: z.record(z.unknown()).nullable(),
 	metadata: z.record(z.unknown()).nullable(),
 	createdAt: z.coerce.date(),
@@ -28,10 +32,14 @@ export const CreateAuditLogSchema = z.object({
 	resourceId: z.string().uuid().optional(),
 	tableId: z.string().uuid().optional(),
 	reason: z.string().optional(),
-	changes: z.record(z.object({
-		old: z.unknown(),
-		new: z.unknown(),
-	})).optional(),
+	changes: z
+		.record(
+			z.object({
+				old: z.unknown(),
+				new: z.unknown(),
+			}),
+		)
+		.optional(),
 	provenance: z.record(z.unknown()).optional(),
 	metadata: z.record(z.unknown()).optional(),
 });

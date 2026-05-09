@@ -61,12 +61,8 @@ export class SSEConsumer {
 				buffer = lines.pop() ?? '';
 
 				for (const block of lines) {
-					const idLine = block
-						.split('\n')
-						.find((l) => l.startsWith('id: '));
-					const dataLine = block
-						.split('\n')
-						.find((l) => l.startsWith('data: '));
+					const idLine = block.split('\n').find((l) => l.startsWith('id: '));
+					const dataLine = block.split('\n').find((l) => l.startsWith('data: '));
 
 					if (idLine) {
 						const id = idLine.slice(4).trim();
@@ -104,7 +100,7 @@ export class SSEConsumer {
 		if (!this.handlers.has(eventType)) {
 			this.handlers.set(eventType, new Set());
 		}
-		this.handlers.get(eventType)!.add(handler);
+		this.handlers.get(eventType)?.add(handler);
 
 		return () => {
 			this.handlers.get(eventType)?.delete(handler);
@@ -134,7 +130,7 @@ export class SSEConsumer {
 	private scheduleReconnect(): void {
 		if (this.reconnectAttempts >= this.maxReconnectAttempts) return;
 
-		const delay = this.reconnectDelay * Math.pow(2, this.reconnectAttempts);
+		const delay = this.reconnectDelay * 2 ** this.reconnectAttempts;
 		this.reconnectAttempts++;
 
 		setTimeout(() => this.connect(), delay);

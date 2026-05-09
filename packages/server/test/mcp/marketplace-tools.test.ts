@@ -1,11 +1,11 @@
-import { describe, it, expect, beforeAll } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
 import { registerTools } from '../../src/mcp/tools/index.js';
 import {
+	createAuthContextGetter,
 	createMockMcpServer,
 	createMockServiceContainer,
-	createAuthContextGetter,
-	getResultText,
 	getResultJson,
+	getResultText,
 } from './setup.js';
 
 describe('Marketplace MCP tools', () => {
@@ -22,9 +22,7 @@ describe('Marketplace MCP tools', () => {
 	describe('search_marketplace', () => {
 		it('should search blueprints with a query', async () => {
 			services.marketplace.searchBlueprints.mockResolvedValueOnce({
-				data: [
-					{ id: 'bp-crm', slug: 'crm', name: 'CRM Blueprint', category: 'sales' },
-				],
+				data: [{ id: 'bp-crm', slug: 'crm', name: 'CRM Blueprint', category: 'sales' }],
 				total: 1,
 			});
 
@@ -110,16 +108,12 @@ describe('Marketplace MCP tools', () => {
 			const json = getResultJson(result) as any;
 
 			expect(json).toMatchObject({ id: 'rev-1', rating: 5, title: 'Excellent' });
-			expect(services.marketplace.submitReview).toHaveBeenCalledWith(
-				'team-test-1',
-				'user-test-1',
-				{
-					blueprintId,
-					rating: 5,
-					title: 'Excellent',
-					body: 'Works perfectly for our sales team.',
-				},
-			);
+			expect(services.marketplace.submitReview).toHaveBeenCalledWith('team-test-1', 'user-test-1', {
+				blueprintId,
+				rating: 5,
+				title: 'Excellent',
+				body: 'Works perfectly for our sales team.',
+			});
 		});
 
 		it('should submit a review with only rating', async () => {
@@ -137,16 +131,12 @@ describe('Marketplace MCP tools', () => {
 			const json = getResultJson(result) as any;
 
 			expect(json.rating).toBe(3);
-			expect(services.marketplace.submitReview).toHaveBeenCalledWith(
-				'team-test-1',
-				'user-test-1',
-				{
-					blueprintId,
-					rating: 3,
-					title: undefined,
-					body: undefined,
-				},
-			);
+			expect(services.marketplace.submitReview).toHaveBeenCalledWith('team-test-1', 'user-test-1', {
+				blueprintId,
+				rating: 3,
+				title: undefined,
+				body: undefined,
+			});
 		});
 	});
 });

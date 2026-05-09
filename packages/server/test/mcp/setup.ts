@@ -1,6 +1,6 @@
+import type { RequestContext } from '@agentsync/types';
 import { vi } from 'vitest';
 import { z } from 'zod';
-import type { RequestContext } from '@agentsync/types';
 
 /**
  * Captures tool registrations from the MCP server so we can invoke handlers directly.
@@ -9,7 +9,10 @@ export interface RegisteredTool {
 	name: string;
 	description: string;
 	schema: Record<string, unknown>;
-	handler: (args: Record<string, unknown>, extra?: Record<string, unknown>) => Promise<{
+	handler: (
+		args: Record<string, unknown>,
+		extra?: Record<string, unknown>,
+	) => Promise<{
 		content: Array<{ type: string; text: string }>;
 		isError?: boolean;
 	}>;
@@ -24,7 +27,11 @@ export function createMockMcpServer() {
 		}),
 		getTools: () => tools,
 		getTool: (name: string) => tools.get(name),
-		invokeTool: async (name: string, args: Record<string, unknown>, extra?: Record<string, unknown>) => {
+		invokeTool: async (
+			name: string,
+			args: Record<string, unknown>,
+			extra?: Record<string, unknown>,
+		) => {
 			const tool = tools.get(name);
 			if (!tool) throw new Error(`Tool '${name}' not registered`);
 			// Apply Zod schema parsing to resolve defaults, matching real MCP SDK behavior
@@ -50,36 +57,63 @@ export function createMockServiceContainer() {
 	return {
 		data: {
 			createRecord: vi.fn().mockResolvedValue({ id: 'rec-1', data: {}, provenance: {} }),
-			getRecord: vi.fn().mockResolvedValue({ id: 'rec-1', data: {}, provenance: {}, relations: [] }),
+			getRecord: vi
+				.fn()
+				.mockResolvedValue({ id: 'rec-1', data: {}, provenance: {}, relations: [] }),
 			updateRecord: vi.fn().mockResolvedValue({ id: 'rec-1', data: {}, provenance: {} }),
 			deleteRecord: vi.fn().mockResolvedValue({ id: 'rec-1' }),
-			queryRecords: vi.fn().mockResolvedValue({ data: [], total: 0, limit: 20, offset: 0, hasMore: false }),
-			verifyField: vi.fn().mockResolvedValue({ id: 'rec-1', provenance: { email: { agent: 'test', at: new Date().toISOString(), confidence: 1 } } }),
+			queryRecords: vi
+				.fn()
+				.mockResolvedValue({ data: [], total: 0, limit: 20, offset: 0, hasMore: false }),
+			verifyField: vi.fn().mockResolvedValue({
+				id: 'rec-1',
+				provenance: { email: { agent: 'test', at: new Date().toISOString(), confidence: 1 } },
+			}),
 			bulkImport: vi.fn().mockResolvedValue([{ id: 'rec-1' }, { id: 'rec-2' }]),
 		},
 		schema: {
 			getWorkspaceBySlug: vi.fn().mockResolvedValue({ id: 'ws-1', slug: 'crm', name: 'CRM' }),
-			getTableBySlug: vi.fn().mockResolvedValue({ id: 'tbl-1', slug: 'contacts', name: 'Contacts' }),
-			findTableBySlug: vi.fn().mockResolvedValue({ id: 'tbl-1', slug: 'contacts', name: 'Contacts' }),
+			getTableBySlug: vi
+				.fn()
+				.mockResolvedValue({ id: 'tbl-1', slug: 'contacts', name: 'Contacts' }),
+			findTableBySlug: vi
+				.fn()
+				.mockResolvedValue({ id: 'tbl-1', slug: 'contacts', name: 'Contacts' }),
 			getFieldsForTable: vi.fn().mockResolvedValue([]),
-			getSchemaOverview: vi.fn().mockResolvedValue([{
-				workspace: { slug: 'crm', name: 'CRM' },
-				tables: [{ slug: 'contacts', name: 'Contacts' }],
-			}]),
+			getSchemaOverview: vi.fn().mockResolvedValue([
+				{
+					workspace: { slug: 'crm', name: 'CRM' },
+					tables: [{ slug: 'contacts', name: 'Contacts' }],
+				},
+			]),
 			listWorkspaces: vi.fn().mockResolvedValue([{ id: 'ws-1', slug: 'crm', name: 'CRM' }]),
-			createWorkspace: vi.fn().mockResolvedValue({ id: 'ws-new', slug: 'new-ws', name: 'New Workspace' }),
-			createTable: vi.fn().mockResolvedValue({ id: 'tbl-new', slug: 'new-table', name: 'New Table' }),
+			createWorkspace: vi
+				.fn()
+				.mockResolvedValue({ id: 'ws-new', slug: 'new-ws', name: 'New Workspace' }),
+			createTable: vi
+				.fn()
+				.mockResolvedValue({ id: 'tbl-new', slug: 'new-table', name: 'New Table' }),
 			createField: vi.fn().mockResolvedValue({ id: 'fld-new', slug: 'new-field' }),
 			alterTable: vi.fn().mockResolvedValue({ id: 'tbl-1', slug: 'contacts' }),
 		},
 		relation: {
-			link: vi.fn().mockResolvedValue({ id: 'rel-1', sourceRecordId: 'rec-1', targetRecordId: 'rec-2', relationType: 'contact' }),
+			link: vi.fn().mockResolvedValue({
+				id: 'rel-1',
+				sourceRecordId: 'rec-1',
+				targetRecordId: 'rec-2',
+				relationType: 'contact',
+			}),
 			unlink: vi.fn().mockResolvedValue(undefined),
 			traverse: vi.fn().mockResolvedValue([{ id: 'rec-2', data: {} }]),
 			getRelationsForRecord: vi.fn().mockResolvedValue([]),
 		},
 		event: {
-			subscribe: vi.fn().mockResolvedValue({ id: 'sub-1', eventType: 'record.created', callbackType: 'sse', isActive: true }),
+			subscribe: vi.fn().mockResolvedValue({
+				id: 'sub-1',
+				eventType: 'record.created',
+				callbackType: 'sse',
+				isActive: true,
+			}),
 			unsubscribe: vi.fn().mockResolvedValue(true),
 			listSubscriptions: vi.fn().mockResolvedValue([]),
 			emit: vi.fn().mockResolvedValue(undefined),
@@ -97,16 +131,24 @@ export function createMockServiceContainer() {
 			create: vi.fn().mockResolvedValue({ id: 'bp-1', slug: 'custom', version: 1 }),
 			evolve: vi.fn().mockResolvedValue({ id: 'bp-1', slug: 'custom', version: 2 }),
 			publish: vi.fn().mockResolvedValue({ id: 'bp-1', slug: 'custom', isPublished: true }),
-			listBuiltin: vi.fn().mockResolvedValue([{ id: 'bp-crm', slug: 'crm', name: 'CRM', category: 'sales', version: 1 }]),
+			listBuiltin: vi
+				.fn()
+				.mockResolvedValue([
+					{ id: 'bp-crm', slug: 'crm', name: 'CRM', category: 'sales', version: 1 },
+				]),
 			listPublished: vi.fn().mockResolvedValue([]),
 			getById: vi.fn().mockResolvedValue({ id: 'bp-1', slug: 'crm' }),
 		},
 		audit: {
 			log: vi.fn().mockResolvedValue(undefined),
-			query: vi.fn().mockResolvedValue({ data: [], total: 0, limit: 20, offset: 0, hasMore: false }),
+			query: vi
+				.fn()
+				.mockResolvedValue({ data: [], total: 0, limit: 20, offset: 0, hasMore: false }),
 		},
 		user: {
-			listByTeam: vi.fn().mockResolvedValue([{ id: 'user-1', email: 'admin@test.com', name: 'Admin' }]),
+			listByTeam: vi
+				.fn()
+				.mockResolvedValue([{ id: 'user-1', email: 'admin@test.com', name: 'Admin' }]),
 			create: vi.fn().mockResolvedValue({ id: 'user-new', email: 'new@test.com' }),
 			update: vi.fn().mockResolvedValue({ id: 'user-1', roleId: 'role-2' }),
 			getByAccountAndTeam: vi.fn().mockResolvedValue(null),
@@ -119,7 +161,11 @@ export function createMockServiceContainer() {
 			getRoleByName: vi.fn().mockResolvedValue({ id: 'role-admin', name: 'admin' }),
 		},
 		account: {
-			getById: vi.fn().mockResolvedValue({ id: 'acct-1', limitsTier: 'verified', primaryEmail: 'admin@test.com' }),
+			getById: vi.fn().mockResolvedValue({
+				id: 'acct-1',
+				limitsTier: 'verified',
+				primaryEmail: 'admin@test.com',
+			}),
 			ensureAccountForMembership: vi.fn().mockResolvedValue('acct-1'),
 			listMemberships: vi.fn().mockResolvedValue([]),
 			countMemberships: vi.fn().mockResolvedValue(0),

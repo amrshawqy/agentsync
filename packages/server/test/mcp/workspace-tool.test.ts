@@ -1,11 +1,11 @@
-import { describe, it, expect, beforeAll } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
 import { registerTools } from '../../src/mcp/tools/index.js';
 import {
+	createAuthContextGetter,
 	createMockMcpServer,
 	createMockServiceContainer,
-	createAuthContextGetter,
-	getResultText,
 	getResultJson,
+	getResultText,
 } from './setup.js';
 
 describe('Agent Kit MCP tools', () => {
@@ -86,11 +86,7 @@ describe('Agent Kit MCP tools', () => {
 			const json = getResultJson(result) as any;
 
 			expect(json.format).toBe('raw');
-			expect(services.agentKit.generate).toHaveBeenCalledWith(
-				'team-test-1',
-				memberId,
-				'raw',
-			);
+			expect(services.agentKit.generate).toHaveBeenCalledWith('team-test-1', memberId, 'raw');
 		});
 	});
 });

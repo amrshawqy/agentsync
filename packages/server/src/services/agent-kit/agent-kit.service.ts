@@ -1,16 +1,16 @@
-import { eq, and } from 'drizzle-orm';
 import type { Database } from '@agentsync/db';
-import { agentKitTemplates, users, roles, teams } from '@agentsync/db';
+import { agentKitTemplates, roles, teams, users } from '@agentsync/db';
 import type { AgentKitFormat } from '@agentsync/types';
-import type { SchemaService } from '../schema/schema.service.js';
-import type { InstructionService } from '../instruction/instruction.service.js';
+import { and, eq } from 'drizzle-orm';
+import { getConfig } from '../../config.js';
 import type { PermissionService } from '../auth/permission.service.js';
-import { TemplateEngine } from './template-engine.js';
-import { SkillGenerator } from './skill-generator.js';
+import type { InstructionService } from '../instruction/instruction.service.js';
+import type { SchemaService } from '../schema/schema.service.js';
 import { FormatAdapter } from './format-adapter.js';
 import { Packager } from './packager.js';
+import { SkillGenerator } from './skill-generator.js';
 import { StalenessDetector } from './staleness.js';
-import { getConfig } from '../../config.js';
+import { TemplateEngine } from './template-engine.js';
 
 export class AgentKitService {
 	private templateEngine = new TemplateEngine();
@@ -46,10 +46,7 @@ export class AgentKitService {
 		const schemaOverview = await this.schemaService.getSchemaOverview(teamId);
 
 		// Get instructions
-		const instructions = await this.instructionService.assemble(
-			teamId,
-			user.roleId ?? '',
-		);
+		const instructions = await this.instructionService.assemble(teamId, user.roleId ?? '');
 
 		// Generate skills from schema — filter by role permissions
 		const rolePermissions = (role?.permissions ?? {}) as Record<string, any>;

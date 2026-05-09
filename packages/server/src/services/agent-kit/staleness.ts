@@ -1,17 +1,14 @@
 import crypto from 'node:crypto';
-import { eq, and } from 'drizzle-orm';
 import type { Database } from '@agentsync/db';
 import { agentKitGenerations } from '@agentsync/db';
 import type { AgentKitFormat } from '@agentsync/types';
+import { and, eq } from 'drizzle-orm';
 
 export class StalenessDetector {
 	constructor(private db: Database) {}
 
 	computeHash(data: unknown): string {
-		return crypto
-			.createHash('sha256')
-			.update(JSON.stringify(data))
-			.digest('hex');
+		return crypto.createHash('sha256').update(JSON.stringify(data)).digest('hex');
 	}
 
 	async isStale(

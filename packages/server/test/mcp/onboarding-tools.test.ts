@@ -1,9 +1,9 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { registerTools } from '../../src/mcp/tools/index.js';
 import {
+	createAuthContextGetter,
 	createMockMcpServer,
 	createMockServiceContainer,
-	createAuthContextGetter,
 	getResultJson,
 } from './setup.js';
 
@@ -35,9 +35,12 @@ describe('Onboarding MCP tools', () => {
 		const payload = getResultJson(result as any) as Record<string, unknown>;
 
 		expect(services.team.create).toHaveBeenCalledWith({ name: 'Acme Team', slug: 'acme-team' });
-		expect(services.user.create).toHaveBeenCalledWith('team-new', expect.objectContaining({
-			accountId: 'acct-test-1',
-		}));
+		expect(services.user.create).toHaveBeenCalledWith(
+			'team-new',
+			expect.objectContaining({
+				accountId: 'acct-test-1',
+			}),
+		);
 		expect(payload).toHaveProperty('accessToken');
 	});
 
@@ -47,10 +50,12 @@ describe('Onboarding MCP tools', () => {
 		});
 		const payload = getResultJson(result as any) as Record<string, unknown>;
 
-		expect(services.invite.createInvite).toHaveBeenCalledWith(expect.objectContaining({
-			teamId: 'team-test-1',
-			email: 'new.user@test.com',
-		}));
+		expect(services.invite.createInvite).toHaveBeenCalledWith(
+			expect.objectContaining({
+				teamId: 'team-test-1',
+				email: 'new.user@test.com',
+			}),
+		);
 		expect(payload).toHaveProperty('inviteCode');
 	});
 

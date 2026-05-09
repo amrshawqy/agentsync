@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
+import type { SubscriptionPattern } from '../../services/event/matcher.js';
 import type { ServiceContainer } from '../../services/index.js';
 import { authMiddleware } from '../middleware/auth.js';
-import type { SubscriptionPattern } from '../../services/event/matcher.js';
 
 export function createEventRoutes(services: ServiceContainer): Hono {
 	const app = new Hono();
@@ -24,7 +24,11 @@ export function createEventRoutes(services: ServiceContainer): Hono {
 
 	app.get('/subscriptions', async (c) => {
 		const activeOnly = c.req.query('activeOnly') !== 'false';
-		const subs = await services.event.listSubscriptions(c.get('teamId'), c.get('userId'), activeOnly);
+		const subs = await services.event.listSubscriptions(
+			c.get('teamId'),
+			c.get('userId'),
+			activeOnly,
+		);
 		return c.json({ success: true, data: subs });
 	});
 
@@ -55,15 +59,14 @@ export function createEventRoutes(services: ServiceContainer): Hono {
 					});
 				}
 
-				services.sseManager.addConnection(
-					connectionId,
-					userId,
-					teamId,
-					ssePatterns,
-					controller,
-					{ deliverAllWhenNoPatterns: false },
+				services.sseManager.addConnection(connectionId, userId, teamId, ssePatterns, controller, {
+					deliverAllWhenNoPatterns: false,
+				});
+				controller.enqueue(
+					new TextEncoder().encode(
+						`id: connect\ndata: {"connected":true,"connectionId":"${connectionId}"}\n\n`,
+					),
 				);
-				controller.enqueue(new TextEncoder().encode(`id: connect\ndata: {"connected":true,"connectionId":"${connectionId}"}\n\n`));
 			},
 			cancel() {
 				services.sseManager.removeConnection(connectionId);

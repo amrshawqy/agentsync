@@ -1,37 +1,42 @@
 import type { Database } from '@agentsync/db';
 import type Redis from 'ioredis';
 
-import { CacheService } from './cache/cache.service.js';
-import { AuthService } from './auth/auth.service.js';
-import { PermissionService } from './auth/permission.service.js';
+import { AgentKitService } from './agent-kit/agent-kit.service.js';
+import { AuditService } from './audit/audit.service.js';
 import { AccountService } from './auth/account.service.js';
 import { AgentIdentityService } from './auth/agent-identity.service.js';
+import { AuthService } from './auth/auth.service.js';
+import { BootstrapService } from './auth/bootstrap.service.js';
 import { EmailVerificationService } from './auth/email-verification.service.js';
-import { SchemaService } from './schema/schema.service.js';
-import { ConstraintService } from './schema/constraint.service.js';
-import { ProvenanceService } from './data/provenance.service.js';
-import { IndexService } from './data/index.service.js';
-import { RelationService } from './data/relation.service.js';
-import { SearchService } from './data/search.service.js';
+import { OidcService } from './auth/oidc.service.js';
+import { PermissionService } from './auth/permission.service.js';
+import { AutomationEngine } from './automation/automation-engine.js';
+import { AutomationService } from './automation/automation.service.js';
+import { BlueprintService } from './blueprint/blueprint.service.js';
+import { BlueprintDraftService } from './blueprint/draft-from-description.js';
+import { MarketplaceService } from './blueprint/marketplace.service.js';
+import { CacheService } from './cache/cache.service.js';
 import { DataService } from './data/data.service.js';
+import { FormulaEngine } from './data/formula-engine.js';
+import { IndexService } from './data/index.service.js';
+import { ProvenanceService } from './data/provenance.service.js';
+import { RelationService } from './data/relation.service.js';
+import { RevisionService } from './data/revision.service.js';
+import { RollupEngine } from './data/rollup-engine.js';
+import { SearchService } from './data/search.service.js';
+import { EmailService } from './email/email.service.js';
 import { EventDispatcher } from './event/dispatcher.js';
+import { EventService } from './event/event.service.js';
 import { SSEManager } from './event/sse-manager.js';
 import { WebhookSender } from './event/webhook-sender.js';
-import { EventService } from './event/event.service.js';
 import { InstructionService } from './instruction/instruction.service.js';
-import { AgentKitService } from './agent-kit/agent-kit.service.js';
-import { BlueprintService } from './blueprint/blueprint.service.js';
-import { MarketplaceService } from './blueprint/marketplace.service.js';
-import { TeamService } from './team/team.service.js';
-import { InviteService } from './team/invite.service.js';
-import { UserService } from './user/user.service.js';
-import { SuggestionService } from './suggestion/suggestion.service.js';
-import { AuditService } from './audit/audit.service.js';
-import { AutomationService } from './automation/automation.service.js';
-import { AutomationEngine } from './automation/automation-engine.js';
-import { FormulaEngine } from './data/formula-engine.js';
-import { RollupEngine } from './data/rollup-engine.js';
+import { ConstraintService } from './schema/constraint.service.js';
+import { SchemaService } from './schema/schema.service.js';
 import { StorageService } from './storage/storage.service.js';
+import { SuggestionService } from './suggestion/suggestion.service.js';
+import { InviteService } from './team/invite.service.js';
+import { TeamService } from './team/team.service.js';
+import { UserService } from './user/user.service.js';
 
 export interface ServiceContainer {
 	cache: CacheService;
@@ -60,18 +65,28 @@ export interface ServiceContainer {
 	automationEngine: AutomationEngine;
 	search: SearchService;
 	storage?: StorageService;
+	email: EmailService;
+	bootstrap: BootstrapService;
+	oidc: OidcService;
+	revision: RevisionService;
+	blueprintDraft: BlueprintDraftService;
 }
 
 export function createServices(db: Database, redis: Redis): ServiceContainer {
 	// Infrastructure
 	const cache = new CacheService(redis);
 
+	// Email
+	const email = new EmailService();
+
 	// Auth
 	const auth = new AuthService(db, cache);
 	const account = new AccountService(db);
 	const agentIdentity = new AgentIdentityService(db);
-	const emailVerification = new EmailVerificationService(db);
+	const emailVerification = new EmailVerificationService(db, email);
 	const permission = new PermissionService(db, cache);
+	const bootstrap = new BootstrapService(db, account);
+	const oidc = new OidcService();
 
 	// Schema
 	const schema = new SchemaService(db, cache);
@@ -93,6 +108,8 @@ export function createServices(db: Database, redis: Redis): ServiceContainer {
 
 	const formulaEngine = new FormulaEngine();
 	const rollupEngine = new RollupEngine(db, relation);
+	const revision = new RevisionService(db);
+	const blueprintDraft = new BlueprintDraftService();
 
 	const data = new DataService(
 		db,
@@ -107,6 +124,7 @@ export function createServices(db: Database, redis: Redis): ServiceContainer {
 		audit,
 		formulaEngine,
 		rollupEngine,
+		revision,
 	);
 
 	// Instructions
@@ -123,7 +141,7 @@ export function createServices(db: Database, redis: Redis): ServiceContainer {
 
 	// Core entities
 	const team = new TeamService(db);
-	const invite = new InviteService(db);
+	const invite = new InviteService(db, email);
 	const user = new UserService(db);
 	const suggestion = new SuggestionService(db, schema);
 	const automation = new AutomationService(db);
@@ -173,6 +191,11 @@ export function createServices(db: Database, redis: Redis): ServiceContainer {
 		automationEngine,
 		search,
 		storage,
+		email,
+		bootstrap,
+		oidc,
+		revision,
+		blueprintDraft,
 	};
 }
 
@@ -208,4 +231,9 @@ export {
 	FormulaEngine,
 	RollupEngine,
 	StorageService,
+	EmailService,
+	BootstrapService,
+	OidcService,
+	RevisionService,
+	BlueprintDraftService,
 };

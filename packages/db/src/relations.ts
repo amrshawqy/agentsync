@@ -1,30 +1,30 @@
 import { relations } from 'drizzle-orm';
 import {
-	teams,
+	accountRefreshTokens,
 	accounts,
-	roles,
-	users,
+	agentAuthChallenges,
+	agentKitGenerations,
+	agentKitTemplates,
 	agents,
-	workspaces,
+	automations,
+	blueprintReviews,
 	blueprints,
-	schemaTables,
-	schemaFields,
-	records,
-	recordIndexes,
-	recordRelations,
+	emailOtpChallenges,
 	eventSubscriptions,
 	fieldSuggestions,
 	instructions,
-	agentKitTemplates,
-	agentKitGenerations,
 	oauthClients,
+	recordIndexes,
+	recordRelations,
+	records,
 	refreshTokens,
-	accountRefreshTokens,
-	blueprintReviews,
-	automations,
+	roles,
+	schemaFields,
+	schemaTables,
 	teamInvites,
-	emailOtpChallenges,
-	agentAuthChallenges,
+	teams,
+	users,
+	workspaces,
 } from './schema/index.js';
 
 export const teamsRelations = relations(teams, ({ many }) => ({
@@ -210,7 +210,10 @@ export const emailOtpChallengesRelations = relations(emailOtpChallenges, ({ one 
 export const agentAuthChallengesRelations = relations(agentAuthChallenges, () => ({}));
 
 export const blueprintReviewsRelations = relations(blueprintReviews, ({ one }) => ({
-	blueprint: one(blueprints, { fields: [blueprintReviews.blueprintId], references: [blueprints.id] }),
+	blueprint: one(blueprints, {
+		fields: [blueprintReviews.blueprintId],
+		references: [blueprints.id],
+	}),
 	team: one(teams, { fields: [blueprintReviews.teamId], references: [teams.id] }),
 	user: one(users, { fields: [blueprintReviews.userId], references: [users.id] }),
 }));
