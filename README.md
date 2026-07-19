@@ -4,7 +4,21 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
 [![Status: alpha](https://img.shields.io/badge/status-alpha-orange.svg)](./CHANGELOG.md)
 
-**One self-hosted data layer your AI agents share.** Drop in any MCP-capable agent (Claude Desktop, Cursor, Cline, Continue, OpenClaw…), point it at your AgentSync URL, and it can read and write structured business data — contacts, deals, tickets, anything you model — under role-based permissions, with full audit and provenance.
+## The End Game
+
+**One platform to replace your CRM, ERP, HR system, project tracker, support desk, and the rest of your business software.**
+
+Traditional business software is mostly data, rules, and workflows hidden behind dozens of separate interfaces. In an agent-first company, those interfaces are no longer the center of work—your AI agents are. AgentSync gives every agent one shared, self-hosted system of record where the business lives: customers, deals, employees, projects, tickets, inventory, finances, and anything else you choose to model.
+
+The flow is simple:
+
+1. **Build your business once.** Deploy ready-made CRM, HR, project management, support, finance, and inventory Blueprints—or describe a custom operation in plain English and let an agent model it.
+2. **Connect every agent to one place.** Give any MCP-capable agent (Claude Desktop, Cursor, Cline, Continue, OpenClaw, and more) the same AgentSync URL. Each agent immediately understands the data and business rules available to it.
+3. **Run the company through conversation.** People ask their agents to qualify a lead, hire an employee, update a project, resolve a ticket, or reconcile inventory. The agents do the work directly in AgentSync instead of sending people through another app.
+4. **Let agents coordinate through shared data.** A closed deal can become an onboarding project; a support issue can inform the customer record; a new hire can trigger equipment and access tasks. Every agent works from the same live context without brittle point-to-point integrations.
+5. **Keep control.** Role-based permissions, workflow constraints, field-level provenance, and a complete audit trail govern who can see or change what—and show exactly what happened, when, and why.
+
+Instead of paying for a growing stack of disconnected systems and stitching them together forever, AgentSync turns your business into one programmable operating layer that any agent can use. **One source of truth. One connection per agent. Any business workflow.**
 
 > 🚧 **Alpha software.** APIs and schemas may change between 0.x releases. Track [CHANGELOG.md](./CHANGELOG.md). Not yet recommended for unattended production use.
 
